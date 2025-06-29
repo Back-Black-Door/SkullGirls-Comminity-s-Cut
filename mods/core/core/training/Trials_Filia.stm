@@ -1,0 +1,105 @@
+CharName FiliaTrials
+CharIcon Textures/Tutorials/symbol_filia01.png
+RowIndex 2
+
+StoryNode
+NodeType Fight
+FileName training/CS_trials/filia/filia_01.ini
+DisplayName CS_Filia1Trial1Name
+DisplayText CS_Filia1Trial1Desc
+PreviewImg	Textures/Story_GenericFightIcon.png
+TimelinePos 1
+NodeUnlockedImg Textures/Tutorials/tut_num01.png
+NodeCompletedImg	Textures/Tutorials/tut_num_complete01.png
+
+StoryNode
+NodeType Fight
+FileName training/CS_trials/filia/filia_02.ini
+DisplayName CS_Filia1Trial2Name
+DisplayText CS_Filia1Trial2Desc
+PreviewImg	Textures/Story_GenericFightIcon.png
+TimelinePos 2
+NodeUnlockedImg Textures/Tutorials/tut_num02.png
+NodeCompletedImg	Textures/Tutorials/tut_num_complete02.png
+
+StoryNode
+NodeType Fight
+FileName training/CS_trials/filia/filia_03.ini
+DisplayName CS_Filia1Trial3Name
+DisplayText CS_Filia1Trial3Desc
+PreviewImg	Textures/Story_GenericFightIcon.png
+TimelinePos 3
+NodeUnlockedImg Textures/Tutorials/tut_num03.png
+NodeCompletedImg	Textures/Tutorials/tut_num_complete03.png
+
+StoryNode
+NodeType Fight
+FileName training/CS_trials/filia/filia_04.ini
+DisplayName CS_Filia1Trial4Name
+DisplayText CS_Filia1Trial4Desc
+PreviewImg	Textures/Story_GenericFightIcon.png
+TimelinePos 4
+NodeUnlockedImg Textures/Tutorials/tut_num04.png
+NodeCompletedImg	Textures/Tutorials/tut_num_complete04.png
+
+StoryNode
+NodeType Fight
+FileName training/CS_trials/filia/filia_05.ini
+DisplayName CS_Filia1Trial5Name
+DisplayText CS_Filia1Trial5Desc
+PreviewImg	Textures/Story_GenericFightIcon.png
+TimelinePos 5
+NodeUnlockedImg Textures/Tutorials/tut_num05.png
+NodeCompletedImg	Textures/Tutorials/tut_num_complete05.png
+
+StoryNode
+NodeType Fight
+FileName training/CS_trials/filia/filia_06.ini
+DisplayName CS_Filia1Trial6Name
+DisplayText CS_Filia1Trial6Desc
+PreviewImg	Textures/Story_GenericFightIcon.png
+TimelinePos 6
+NodeUnlockedImg Textures/Tutorials/tut_num06.png
+NodeCompletedImg	Textures/Tutorials/tut_num_complete06.png
+
+StoryNode
+NodeType Fight
+FileName training/CS_trials/filia/filia_07.ini
+DisplayName CS_Filia1Trial7Name
+DisplayText CS_Filia1Trial7Desc
+PreviewImg	Textures/Story_GenericFightIcon.png
+TimelinePos 7
+NodeUnlockedImg Textures/Tutorials/tut_num07.png
+NodeCompletedImg	Textures/Tutorials/tut_num_complete07.png
+
+StoryNode
+NodeType Fight
+FileName training/trials/filia/filia_04.ini
+DisplayName Trial4
+DisplayText Trials Description
+PreviewImg	Textures/Story_GenericFightIcon.png
+TimelinePos 8
+NodeUnlockedImg Textures/Tutorials/tut_num08.png
+NodeCompletedImg	Textures/Tutorials/tut_num_complete08.png
+
+StoryNode
+NodeType Fight
+FileName training/trials/filia/filia_03.ini
+DisplayName Trial3
+DisplayText Trials Description
+PreviewImg	Textures/Story_GenericFightIcon.png
+TimelinePos 9
+NodeUnlockedImg Textures/Tutorials/tut_num09.png
+NodeCompletedImg	Textures/Tutorials/tut_num_complete09.png
+
+StoryNode
+NodeType Fight
+FileName training/trials/filia/filia_04.ini
+DisplayName Trial4
+DisplayText Trials Description
+PreviewImg	Textures/Story_GenericFightIcon.png
+TimelinePos 10
+NodeUnlockedImg Textures/Tutorials/tut_num10.png
+NodeCompletedImg	Textures/Tutorials/tut_num_complete10.png
+
+StoryNode Complete
