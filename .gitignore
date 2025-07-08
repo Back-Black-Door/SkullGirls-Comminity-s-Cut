@@ -1,6 +1,8 @@
 /Debug
 /SkullGir.529f383a
 /.vs
+/crash-dumps
 *.vcxproj
 *vcxproj.filters
 *.vcxproj.user
+todo.md
