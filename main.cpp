@@ -9,6 +9,9 @@
 #include "json.hpp"
 
 #pragma comment(lib, "lua54.lib")
+
+
+
 #include <lua.hpp>
 #include "modslualib.h"
 
@@ -308,6 +311,20 @@ void RussianLanguage(HANDLE& ThreadHande, HANDLE& ProcessHandle, DWORD BaseAdres
 
 
 int main(int argc, char* argv[]) {
+    //Install, if our program not named SkullGirls.exe
+    /*if (_tcscmp(argv[0], "-logtoconsole")*/
+    std::filesystem::path CCPath{ argv[0] };
+    if (!((CCPath.filename() == "SkullGirls.exe") or (CCPath.filename() == "Skullgirls.exe"))) {
+        std::cout << "We are not \"SkullGirls.exe\" must fix that" << '\n';
+        if (std::filesystem::exists(CCPath.parent_path() / "SkullGirls.exe")) {
+            std::cout << "SkullGirls.exe is exist, try to rename" << '\n';
+            std::filesystem::rename(CCPath.parent_path() / "SkullGirls.exe", CCPath.parent_path() / "ORIGINALSkullGirls.exe");
+         }
+        std::filesystem::rename(CCPath, CCPath.parent_path() / "SkullGirls.exe");
+        WinExec("SkullGirls.exe",0);
+        return 0;
+    }
+
     //ShowWindow(GetConsoleWindow(), SW_HIDE); //uncomment, if don't wanna see console
 
     std::cout << R"(
@@ -334,7 +351,12 @@ int main(int argc, char* argv[]) {
     int CCVersion{ 0 }; //CC Version
     COORD HomeCord{ 0,23 };
     std::cout << "Author: ImpDi" << "\n";
-    std::cout << "Version: " << CCVersion << "\n\n";
+    std::cout << "Version: " << CCVersion << "\n";
+#ifdef _DEBUG
+    std::cout << "CC_LunchName: " << argv[0] << '\n';
+    HomeCord = { 0,24 };
+#endif // DEBUG
+    std::cout << '\n';
     bool DebugOn{ 0 }; // LaunchOptions
     bool ReinstallAll{ 0 };
 
@@ -522,11 +544,11 @@ int main(int argc, char* argv[]) {
 #ifdef _DEBUG    
     system("pause");
 #endif // DEBUG
-    ClearScreen(HomeCord);
 
+    ClearScreen(HomeCord);
     //GFS Stuff Start
 
-    if (1) {
+    if (0) {
 
         for (const std::filesystem::directory_entry& dir_entry : std::filesystem::directory_iterator(data01FolderPath)) {
 
@@ -582,11 +604,16 @@ int main(int argc, char* argv[]) {
     };
 
     for (auto i : GFSArhive) {
-        if (!(std::filesystem::exists(data02FolderPath / i))) {
-            std::cout << "We haven't " << i << '\n';
-            std::cout << "Something bad happend!" << '\n';
-            system("pause");
-            return 1;
+        if (!(std::filesystem::exists(data02FolderPath / i))){
+            std::cout << "We haven't " << data02FolderPath / i << '\n';
+            if (std::filesystem::is_symlink(data02FolderPath / i)){
+            std::cout << "Symlink already exist" << '\n';
+            }
+            else 
+            {
+                std::filesystem::create_symlink(data01FolderPath / i, data02FolderPath / i);
+                std::cout << "Symlink created" << '\n';
+            }
         }
     }
 
@@ -640,7 +667,13 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Done modification SG" << "\n";
 
-
+    #ifdef NDEBUG
+    if (vectorModloop.size() == 0)
+    {
+        std::cout << "Goodbye!" << "\n";
+        return 0;
+    }
+    #endif
 
 
     //init something, thaw we did'n need to reinit them later
@@ -670,7 +703,6 @@ int main(int argc, char* argv[]) {
 #ifdef _DEBUG    
     Sleep(5000);
 #endif // DEBUG
-
 
     return 0;
 
