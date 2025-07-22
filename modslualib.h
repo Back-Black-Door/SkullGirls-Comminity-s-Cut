@@ -4,10 +4,6 @@
 #include <string>
 #include <filesystem>
 
-namespace Cfunc {
-	void loadCFunc(lua_State* L);
-	int multiply_2_numbers(lua_State* L);
-}
 class Mod {
 	public:
 	Mod(lua_State* L);
@@ -27,3 +23,11 @@ class Mod {
 	void update();
 	void launch();
 };
+
+namespace nsCCLib {
+	int my_add(lua_State* L);
+	static const luaL_Reg ССlib[] = {
+	  {"add", my_add}, // Функция `add` в Lua будет вызывать `my_add` из C++
+	  {nullptr, nullptr} // Маркер конца
+	};
+}

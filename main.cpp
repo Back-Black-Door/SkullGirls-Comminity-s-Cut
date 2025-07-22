@@ -4,9 +4,10 @@
 #include <TlHelp32.h>
 #include <tchar.h>
 #include <array>
-#include "gfs.h"
 #include <cstdio>
 #include "json.hpp"
+#include <filesystem>
+#include <fstream>
 
 #pragma comment(lib, "lua54.lib")
 
@@ -309,7 +310,6 @@ void RussianLanguage(HANDLE& ThreadHande, HANDLE& ProcessHandle, DWORD BaseAdres
 }
 
 
-
 int main(int argc, char* argv[]) {
     //Install, if our program not named SkullGirls.exe
     /*if (_tcscmp(argv[0], "-logtoconsole")*/
@@ -456,54 +456,58 @@ int main(int argc, char* argv[]) {
 #endif // DEBUG
     ClearScreen(HomeCord);
 
+    std::vector<Mod> vectorMod;
+    std::vector<size_t> vectorModlaunch;
+    std::vector<size_t> vectorModloop;
+    std::vector<size_t> vectorModDeinit;
 
-    std::vector<Mod> vectorModlaunch;
-    std::vector<Mod> vectorModloop;
-    std::vector<Mod> vectorModDeinit;
+
 
     for (const std::filesystem::directory_entry& dir_entry : std::filesystem::directory_iterator(modsFolderPath)) {
-
+        
         lua_State* L = luaL_newstate();
         luaL_openlibs(L);
 
-        Cfunc::loadCFunc(L);
+        luaL_newlib(L, nsCCLib::ÑÑlib);
+        lua_setglobal(L, "CCLib");
 
         std::filesystem::path dir_entry_path = dir_entry;
         if (dir_entry_path.extension() == ".lua") {
             if (luaL_dofile(L, dir_entry_path.string().c_str()) == LUA_OK) {
-                Mod Mod(L);
+                Mod CurrentMod(L);
                 std::cout << "[C] Executed " << dir_entry_path<< "\n";
-                if (!(savedatajson[Mod.ModInfo.modName].is_null())) {
-                    std::cout << "[C] " << Mod.ModInfo.modName << " Already has in savedata" << "\n";
-                    if (savedatajson[Mod.ModInfo.modName]["Version"] < Mod.ModInfo.modVerion) {
-                        std::cout << "[C] " << Mod.ModInfo.modName << " NOT in actual version, so - Update" << "\n";
-                        Mod.update();
-                        savedatajson[Mod.ModInfo.modName]["Version"] = Mod.ModInfo.modVerion;
-                        savedatajson[Mod.ModInfo.modName]["Author"] = Mod.ModInfo.modAuthor;
-                        savedatajson[Mod.ModInfo.modName]["Path"] = Mod.ModInfo.modPath;
+                if (!(savedatajson[CurrentMod.ModInfo.modName].is_null())) {
+                    std::cout << "[C] " << CurrentMod.ModInfo.modName << " Already has in savedata" << "\n";
+                    if (savedatajson[CurrentMod.ModInfo.modName]["Version"] < CurrentMod.ModInfo.modVerion) {
+                        std::cout << "[C] " << CurrentMod.ModInfo.modName << " NOT in actual version, so - Update" << "\n";
+                        CurrentMod.update();
+                        savedatajson[CurrentMod.ModInfo.modName]["Version"] = CurrentMod.ModInfo.modVerion;
+                        savedatajson[CurrentMod.ModInfo.modName]["Author"] = CurrentMod.ModInfo.modAuthor;
+                        savedatajson[CurrentMod.ModInfo.modName]["Path"] = CurrentMod.ModInfo.modPath;
                     }
                     else {
-                        std::cout << "[C] " << Mod.ModInfo.modName << " Has actual version" << "\n";
+                        std::cout << "[C] " << CurrentMod.ModInfo.modName << " Has actual version" << "\n";
                     }
                 }
                 else {
                     std::cout << "[C] We have a new mod. Try to save mod data in json" << "\n";
-                    Mod.install();
-                    savedatajson[Mod.ModInfo.modName]["Version"] = Mod.ModInfo.modVerion;
-                    savedatajson[Mod.ModInfo.modName]["Author"] = Mod.ModInfo.modAuthor;
-                    savedatajson[Mod.ModInfo.modName]["Path"] = Mod.ModInfo.modPath;
+                    CurrentMod.install();
+                    savedatajson[CurrentMod.ModInfo.modName]["Version"] = CurrentMod.ModInfo.modVerion;
+                    savedatajson[CurrentMod.ModInfo.modName]["Author"] = CurrentMod.ModInfo.modAuthor;
+                    savedatajson[CurrentMod.ModInfo.modName]["Path"] = CurrentMod.ModInfo.modPath;
                 }
-                Mod.init();
-
-                lua_getglobal(L, "Mod"); // get foo on the stack
-
+                CurrentMod.init();
+                vectorMod.push_back(CurrentMod);
+                
+                    lua_getglobal(L, "Mod"); // get foo on the stack
                     lua_getfield(L, -1, "launch");
 
                     if (lua_isfunction(L, -1) != 1) {
                         std::cout << "[C] " << "We haven't Launch() func" << "\n";
                     }
                     else {
-                        vectorModlaunch.push_back(Mod);
+                        vectorModlaunch.push_back(vectorMod.size()-1);
+                        
                     }
                     lua_getglobal(L, "Mod");
                     lua_getfield(L, -1, "loop");
@@ -512,7 +516,7 @@ int main(int argc, char* argv[]) {
                         std::cout << "[C] " << "We haven't Loop()  func" << "\n";
                     }
                     else {
-                        vectorModloop.push_back(Mod);
+                        vectorModloop.push_back(vectorMod.size() - 1);
                     }
                     lua_getglobal(L, "Mod");
                     lua_getfield(L, -1, "deinit");
@@ -521,7 +525,7 @@ int main(int argc, char* argv[]) {
                         std::cout << "[C] " << "We haven't Deinit()  func" << "\n";
                     }
                     else {
-                        vectorModDeinit.push_back(Mod);
+                        vectorModDeinit.push_back(vectorMod.size() - 1);
                     }
             }
             else {
@@ -529,7 +533,6 @@ int main(int argc, char* argv[]) {
                 luaL_error(L, "Error: %s\n", lua_tostring(L, -1));
             }
         } 
-        lua_close(L);
     }
     std::cout << "[C] Done Mod Init & Install & Update" << '\n';
 
@@ -546,73 +549,21 @@ int main(int argc, char* argv[]) {
 #endif // DEBUG
 
     ClearScreen(HomeCord);
-    //GFS Stuff Start
 
-    if (0) {
 
-        for (const std::filesystem::directory_entry& dir_entry : std::filesystem::directory_iterator(data01FolderPath)) {
-
-            std::filesystem::path currentfile = dir_entry;
-
-            if (currentfile.extension() == ".gfs") { //Work only with gfs files
-                std::cout << "Working with: " << data01FolderPath / currentfile.filename() << '\n';
-                if (!(std::filesystem::exists(modsFolderPath / currentfile.filename().replace_extension("")))) { //We haven't mods
-                    if (!(std::filesystem::exists(data02FolderPath / currentfile.filename()))) {
-                        std::cout << "There are no mods for this package. Making symlink..." << '\n';
-                        std::filesystem::create_symlink(currentfile, data02FolderPath / currentfile.filename());
-                    }
-                    else {
-                        std::cout << "There are no mods for this package. Symlink already exist" << '\n';
-                    }
+    for (const std::filesystem::directory_entry& dir_entry : std::filesystem::directory_iterator(data01FolderPath)) {
+        std::string i = dir_entry.path().filename().string();
+        if (dir_entry.path().extension() == ".gfs") {
+            if (!(std::filesystem::exists(data02FolderPath / i))) {
+                std::cout << "We haven't " << data02FolderPath / i << '\n';
+                if (std::filesystem::is_symlink(data02FolderPath / i)) {
+                    std::cout << "Symlink already exist" << '\n';
                 }
-                else {  //We have mods in ModeFolder
-                    if (std::filesystem::exists(data02FolderPath / currentfile.filename())) {
-                        std::cout << "We already have something in data02 Folder. Remove..." << '\n';
-                        std::filesystem::remove(data02FolderPath / currentfile.filename());
-                    }
-                    GFS Data01Package(data01FolderPath / currentfile.filename());
-                    GFS ModePackage(modsFolderPath / currentfile.filename().replace_extension(""));
-
-                    ModePackage.header.print_Header();
-
-                    //Data01Package.addGFStoGFS(ModePackage);
-                    //Data01Package.write_GFS(data02FolderPath / currentfile.filename().replace_extension(".gfs"));
+                else
+                {
+                    std::filesystem::create_symlink(data01FolderPath / i, data02FolderPath / i);
+                    std::cout << "Symlink created" << '\n';
                 }
-            }
-        }
-    }
-    
-    //GFS Stuff Ends
-    std::array<std::string, 17> GFSArhive{
-    "characters_jp-win.gfs",
-    "characters-art.gfs",
-    "characters-art-pt.gfs",
-    "characters-foits.gfs",
-    "characters-win.gfs",
-    "core.gfs",
-    "music-win.gfs",
-    "sprites.gfs",
-    "stages.gfs",
-    "stages-textures.gfs",
-    "stages-textures2d.gfs",
-    "story_art.gfs",
-    "story_vo_jp-win.gfs",
-    "story_vo-win.gfs",
-    "ui.gfs",
-    "ui-artgallery.gfs",
-    "ui-win.gfs"
-    };
-
-    for (auto i : GFSArhive) {
-        if (!(std::filesystem::exists(data02FolderPath / i))){
-            std::cout << "We haven't " << data02FolderPath / i << '\n';
-            if (std::filesystem::is_symlink(data02FolderPath / i)){
-            std::cout << "Symlink already exist" << '\n';
-            }
-            else 
-            {
-                std::filesystem::create_symlink(data01FolderPath / i, data02FolderPath / i);
-                std::cout << "Symlink created" << '\n';
             }
         }
     }
@@ -662,8 +613,11 @@ int main(int argc, char* argv[]) {
         ChangeDataDirectoryFirstTime(SGpi.hThread, SGpi.hProcess, BaseAdress, datafirst);
         ChangeSal(SGpi.hThread, SGpi.hProcess, BaseAdress, salreplace);
         //RussianLanguage(SGpi.hThread, SGpi.hProcess, BaseAdress, russianlang);
-    }
+    }  
 
+    for (size_t i : vectorModlaunch) {
+        vectorMod[i].launch();
+    }
 
     std::cout << "Done modification SG" << "\n";
 
@@ -687,17 +641,23 @@ int main(int argc, char* argv[]) {
 
     while (code == 259) {
         GetExitCodeProcess(SGpi.hProcess, &code);
-
+        for (size_t i : vectorModloop) {
+            vectorMod[i].loop();
+        }
         //Debugger(DebugEv, SGpi.hThread, SGpi.hProcess, DebugOn);
         //For infinity function 
-        Sleep(500);
+        //Sleep(500);
     }
 
     std::cout << "Skullgirls Wanna Exit" << "\n";
-
+    for (size_t i : vectorModDeinit) {
+        vectorMod[i].deinit();
+    }
     CloseHandle(SGpi.hProcess);
     CloseHandle(SGpi.hThread);
-    
+    for (Mod i : vectorMod) {
+        lua_close(i.LuaState);
+    }
 
     std::cout << "Goodbye!" << "\n";
 #ifdef _DEBUG    

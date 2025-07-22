@@ -2,7 +2,6 @@
 #pragma comment(lib, "lua54.lib")
 #include <lua.hpp>
 #include <iostream>
-#include "gfs.h"
 
 Mod::Mod(lua_State* L) {
     std::cout << "[C] Start Reading ModInfo" << '\n';
@@ -120,27 +119,12 @@ void Mod::launch() {
     }
 }
 
-namespace Cfunc {
-
-
-      void loadCFunc(lua_State* L) {
-            lua_pushcfunction(L, multiply_2_numbers);
-            lua_setglobal(L, "multiply_2_numbers");
-      }
-
-
-      static int multiply_2_numbers(lua_State* L) {
-            // function args are on the lua stack, last arg is on top
-            lua_Number arg_2 = lua_tonumber(L, -1);
-            lua_Number arg_1 = lua_tonumber(L, -2);
-
-            std::cout << "[C] executing multiply_2_numbers with two arguments: "
-                << arg_1 << " and " << arg_2 << '\n';
-            // calculate the result
-            lua_Number result = arg_2 * arg_1;
-            // push the result back to the stack
-            lua_pushnumber(L, result);
-            // return 1 because we have 1 return value (i know magic number ...)
-            return 1;
+namespace nsCCLib {
+      int my_add(lua_State* L) {
+          int a = lua_tonumber(L, 1); // Первый аргумент
+          int b = lua_tonumber(L, 2); // Второй аргумент
+          int result = a + b;
+          lua_pushnumber(L, result); // Возвращаем результат
+          return 1; // Количество возвращаемых значений
       }
 }
