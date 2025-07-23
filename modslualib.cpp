@@ -34,11 +34,11 @@ Mod::Mod(lua_State* L) {
     }
 }
 
-void Mod::Test() {
+const void Mod::Test() {
     std::cout << "TestTest" << '\n';
 }
 
-void Mod::init() {
+const void Mod::init() {
     lua_getglobal(LuaState, "Mod"); // get foo on the stack
     if (lua_istable(LuaState, -1)) {
         lua_getfield(LuaState, -1, "init");
@@ -51,7 +51,7 @@ void Mod::init() {
         }
     }
 }
-void Mod::install() {
+const void Mod::install() {
     lua_getglobal(LuaState, "Mod"); // get foo on the stack
     if (lua_istable(LuaState, -1)) {
         lua_getfield(LuaState, -1, "install");
@@ -64,7 +64,7 @@ void Mod::install() {
         }
     }
 }
-void Mod::loop() {
+const void Mod::loop() {
     lua_getglobal(LuaState, "Mod"); // get foo on the stack
     if (lua_istable(LuaState, -1)) {
         lua_getfield(LuaState, -1, "loop");
@@ -77,7 +77,7 @@ void Mod::loop() {
         }
     }
 }
-void Mod::deinit() {
+const void Mod::deinit() {
     lua_getglobal(LuaState, "Mod"); // get foo on the stack
     if (lua_istable(LuaState, -1)) {
         lua_getfield(LuaState, -1, "deinit");
@@ -90,7 +90,7 @@ void Mod::deinit() {
         }
     }
 }
-void Mod::update() {
+const void Mod::update() {
     lua_getglobal(LuaState, "Mod"); // get foo on the stack
     if (lua_istable(LuaState, -1)) {
         lua_getfield(LuaState, -1, "update");
@@ -103,7 +103,7 @@ void Mod::update() {
         }
     }
 }
-void Mod::launch() {
+const void Mod::launch() {
     lua_getglobal(LuaState, "Mod"); // get foo on the stack
     if (lua_istable(LuaState, -1)) {
         lua_getfield(LuaState, -1, "launch");

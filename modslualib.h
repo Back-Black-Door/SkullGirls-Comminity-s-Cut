@@ -15,13 +15,13 @@ class Mod {
 	};
 	lua_State* LuaState;
 	ModHeader ModInfo;
-	void Test();
-	void init();
-	void install();
-	void loop();
-	void deinit();
-	void update();
-	void launch();
+	const void Test();
+	const void init();
+	const void install();
+	const void loop();
+	const void deinit();
+	const void update();
+	const void launch();
 };
 
 namespace nsCCLib {

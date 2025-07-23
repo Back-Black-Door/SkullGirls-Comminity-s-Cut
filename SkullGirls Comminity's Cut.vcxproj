@@ -158,10 +158,13 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="modslualib.cpp" />
+    <ClCompile Include="Patching.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="config.h" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="modslualib.h" />
+    <ClInclude Include="Patching.h" />
     <ClInclude Include="sol\abort.hpp" />
     <ClInclude Include="sol\assert.hpp" />
     <ClInclude Include="sol\as_args.hpp" />

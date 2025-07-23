@@ -5,19 +5,24 @@
 #include <tchar.h>
 #include <array>
 #include <cstdio>
-#include "json.hpp"
-#include <filesystem>
 #include <fstream>
+#include <process.h>
+
+#include <filesystem>
+namespace fs = std::filesystem;
 
 #pragma comment(lib, "lua54.lib")
-
-
 #include <lua.hpp>
-#include "modslualib.h"
 
-//#define _DEBUG Use if wanna see some debug info.
-
+#include "json.hpp"
 using json = nlohmann::json;
+
+#include "modslualib.h"
+#include "Patching.h"
+#include "config.h"
+
+
+
 
 void ClearScreen(COORD homeCoords)
 {
@@ -79,250 +84,75 @@ DWORD GetModuleBaseAddress(DWORD pID) {
     return dwModuleBaseAddress;
 }
 
-void CreateNewPage(HANDLE& ThreadHande, HANDLE& ProcessHandle) {
-
-    PVOID remoteBuffer;
-    remoteBuffer = VirtualAllocEx(
-        ProcessHandle,    //Handle Process
-        NULL,           //lpAddress
-        1,              //sizeof shellcode, 
-        MEM_COMMIT,     //flAllocationType
-        PAGE_READWRITE  //flProtect
-    );
-    std::cout << "New Page Base Adress: " << std::hex << remoteBuffer << "\n";
-
-}
-
-void NewsBreaker(HANDLE& ThreadHande, HANDLE& ProcessHandle, DWORD BaseAdress, bool& NEWS) {
-    if (NEWS == 0) return;
-    unsigned char NewNewsString[] = "SG_is_Still_Alive";
-    int NewsAdress{};
-
-
-    ReadProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x00436E54), &NewsAdress, sizeof(NewsAdress), 0);
-    if (NewsAdress == 0) {
-        NEWS = 1;
-        return;
-    }
-    WriteProcessMemory(ProcessHandle, (LPVOID)(NewsAdress), (LPVOID)NewNewsString, sizeof NewNewsString, NULL);
-    std::cout << "Breaking News!" << "\n";
-    NEWS = 0;
-}
-void GFSValidathionBreaker(HANDLE& ThreadHande, HANDLE& ProcessHandle, DWORD BaseAdress, bool& dotgfs) {
-    if (dotgfs == 0) return;
-
-    unsigned char JMP = { 0xEB };
-    unsigned char JMPValue{ NULL };
-
-    ReadProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x0011BE67), &JMPValue, 1, 0);
-    if (JMPValue == NULL) {
-        dotgfs = 1;
-        return;
-    }
-    WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x0011BE67), &JMP, 1, NULL);
-    std::cout << "Breaking .gfs Validathion!" << "\n";
-    dotgfs = 0;
-}
-void SalValidathionBreaker(HANDLE& ThreadHande, HANDLE& ProcessHandle, DWORD BaseAdress, bool& dotsal) {
-    if (dotsal == 0) return;
-
-    unsigned char JMP = { 0xEB };
-    unsigned char JMPValue{ NULL };
-
-
-    ReadProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x5C0F4), &JMPValue, 1, 0);
-    if (JMPValue == NULL) {
-        dotsal = 1;
-        return;
-    }
-    WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x5C0F4), &JMP, 1, NULL);
-    std::cout << "Breaking .sal Validathion!" << "\n";
-    dotsal = 0;
-}
-
-void ChangeDataDirectoryFirstTime(HANDLE& ThreadHande, HANDLE& ProcessHandle, DWORD BaseAdress, bool& data) {
-    if (data == 0) return;
-    unsigned char NewString[] = "/data02/";
-    unsigned char OldString[sizeof NewString]{ NULL };
-
-
-    ReadProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3e922c), &OldString, sizeof(OldString), 0);
-    if (OldString == 0) {
-        data = 1;
-        return;
-    }
-
-    DWORD old;
-    VirtualProtectEx
-    (
-        ProcessHandle,
-        LPVOID(BaseAdress + 0x3e9000),		
-        0x4B000,	
-        PAGE_EXECUTE_READWRITE,
-        &old	
-    );
-
-    WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3e922c), &NewString, sizeof NewString, 0);
-
-    VirtualProtectEx
-    (
-        ProcessHandle,
-        LPVOID(BaseAdress + 0x3e9000),		
-        0x4B000,		
-        PAGE_READONLY,	
-        &old	
-    );
-
-    std::cout << "Change Data Directory First Time" << "\n";
-    data = 0;
-}
-void ChangeDataDirectorySecondTime(HANDLE& ThreadHande, HANDLE& ProcessHandle, DWORD BaseAdress, bool& data) {
-    if (data == 0) return;
-    unsigned char NewString[] = "data02";
-    unsigned char OldString[sizeof NewString]{ NULL };
-
-
-    ReadProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3efe20), &OldString, sizeof(OldString), 0);
-    if (OldString == 0) {
-        data = 1;
-        return;
-    }
-
-    DWORD old;
-    VirtualProtectEx
-    (
-        ProcessHandle,
-        LPVOID(BaseAdress + 0x3ef000),		
-        0x45000,	
-        PAGE_EXECUTE_READWRITE,	
-        &old	
-    );
-
-    //WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3efe20), &NewString, sizeof NewString, 0);
-
-    VirtualProtectEx
-    (
-        ProcessHandle,
-        LPVOID(BaseAdress + 0x3ef000),		
-        0x4B000,		
-        PAGE_READONLY,	
-        &old	
-    );
-    std::cout << "Change Data Directory Second Time Time" << "\n";
-    std::cout << GetLastError() << "\n";
-    data = 0;
-}
-
-void ChangeSal(HANDLE& ThreadHande, HANDLE& ProcessHandle, DWORD BaseAdress, bool& data) {
-    if (data == 0) return;
-    unsigned char NewString[] = "FULL_SGCC.sal";
-    unsigned char OldString[sizeof NewString]{ NULL };
-
-
-    ReadProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3dbc7c), &OldString, sizeof(OldString), 0);
-    if (OldString == 0) {
-        data = 1;
-        return;
-    }
-
-    DWORD old;
-    VirtualProtectEx
-    (
-        ProcessHandle,
-        LPVOID(BaseAdress + 0x3db000),		// адрес региона для установки флага
-        0xE678,		// размер региона
-        PAGE_EXECUTE_READWRITE,	// флаг
-        &old	// адрес для сохранения старых флагов
-    );
-
-    WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3dbc7c), &NewString, sizeof NewString, 0);
-
-    VirtualProtectEx
-    (
-        ProcessHandle,
-        LPVOID(BaseAdress + 0x3db000),		// адрес региона для установки флага
-        0xE678,		// размер региона
-        PAGE_READONLY,	// флаг
-        &old	// адрес для сохранения старых флагов
-    );
-
-    std::cout << "Change .sal File Name" << "\n";
-    data = 0;
-}
-
-
-void Debugger(DEBUG_EVENT& DebugEv, HANDLE& ThreadHande, HANDLE& ProcessHandle, bool& DebugOn) {
-    if (DebugOn == 0) {
-        return;
-    }
-    WaitForDebugEvent(&DebugEv, INFINITE);
-    switch (DebugEv.dwDebugEventCode) {
-    case OUTPUT_DEBUG_STRING_EVENT:
-
-        BYTE* pBuffer = (BYTE*)malloc(DebugEv.u.DebugString.nDebugStringLength);
-        SIZE_T bytesRead;
-
-        ReadProcessMemory(ProcessHandle, DebugEv.u.DebugString.lpDebugStringData, pBuffer, DebugEv.u.DebugString.nDebugStringLength, &bytesRead);
-        //ClearScreen(COORD{ 0,15 });
-        std::cout << "Debug Output: " << pBuffer << "\n";
-        free(pBuffer);
-        break;
-    }
-    ContinueDebugEvent(DebugEv.dwProcessId, DebugEv.dwThreadId, DBG_CONTINUE);
-}
-
-void RussianLanguage(HANDLE& ThreadHande, HANDLE& ProcessHandle, DWORD BaseAdress, bool& data) {
-    if (data == 0) return;
-
-
-    unsigned char FirstJMPOld{ NULL };
-
-    ReadProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x1AB977), &FirstJMPOld, sizeof(FirstJMPOld), 0);
-    if (FirstJMPOld == 0) {
-        data = 1;
-        return;
-    }
-
-    unsigned char FirstJMP = { 0x8E };
-    std::array<char, 2>SecondJMP = { 0xEB,0x2A };
-    std::array<char, 76>MYCODE =
+namespace ProcessUtils {
+    DWORD getppid()
     {
-    0xE9, 0x19, 0x04, 0x00, 0x00, 0x74, 0xD4, 0x8B, 0x55, 0xBC, 0x8B, 0x45, 0xD0, 0x83, 0xF8, 0x10,
-    0x8D , 0x4D , 0xBC , 0x0F , 0x43 , 0xCA , 0x83 , 0xFF , 0x03 , 0x75 , 0x31 , 0x0F , 0x57 , 0xC0 , 0xC7 , 0x45,
-    0xE4, 0x02 , 0x00 , 0x00 , 0x00 , 0xB8 , 0x72 , 0x75 , 0x00 , 0x00 , 0xC7 , 0x45 , 0xE8 , 0x0F , 0x00 , 0x00,
-    0x00 , 0x0F , 0x11 , 0x45 , 0xD4 , 0x66 , 0x89 , 0x45 , 0xD4 , 0x8D , 0x4D , 0xD4 , 0xC6 , 0x45 , 0xFC , 0x03,
-    0xE9 , 0xD9 , 0x03 , 0x00 , 0x00 , 0x90 , 0x90 , 0x90 , 0x90 , 0x90 , 0x90 , 0x90
-    };
-    std::array<char, 5>Space1 = { 0xE9,0x3A,0x03,0x00,0x00 };
-    std::array<char, 5>Space2 = { 0xE9,0x5B,0x02,0x00,0x00 };
-    std::array<char, 5>Space3 = { 0xE9,0xDB,0x00,0x00,0x00 };
-    std::array<char, 4>HHTPS = { 0x32,0x32,0x32,0x33 };
+        HANDLE hSnapshot;
+        PROCESSENTRY32 pe32;
+        DWORD ppid = 0, pid = GetCurrentProcessId();
 
-    WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x1AB8F2), &FirstJMP, sizeof(FirstJMP), 0); //FirstJMP
-    WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x1AB950), &SecondJMP, sizeof(SecondJMP), 0); //SecondJMP
-    WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x1AB977), &MYCODE, sizeof(MYCODE), 0); //MYCODE
-    WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x1ABA56), &Space1, sizeof(Space1), 0); //Space1
-    WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x1ABB35), &Space2, sizeof(Space2), 0); //Space2
-    WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x1ABCB5), &Space3, sizeof(Space3), 0); //Space3
-    std::cout << "Russian Language! " << "\n";
-    data = 0;
-}
+        hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        __try {
+            if (hSnapshot == INVALID_HANDLE_VALUE) __leave;
 
+            ZeroMemory(&pe32, sizeof(pe32));
+            pe32.dwSize = sizeof(pe32);
+            if (!Process32First(hSnapshot, &pe32)) __leave;
+
+            do {
+                if (pe32.th32ProcessID == pid) {
+                    ppid = pe32.th32ParentProcessID;
+                    break;
+                }
+            } while (Process32Next(hSnapshot, &pe32));
+
+        }
+        __finally {
+            if (hSnapshot != INVALID_HANDLE_VALUE) CloseHandle(hSnapshot);
+        }
+        return ppid;
+    }
+    DWORD GetModuleBaseAddress(DWORD processId, const std::string& moduleName) {
+        HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId);
+        if (hSnapshot == INVALID_HANDLE_VALUE) {
+            throw std::runtime_error("Failed to create module snapshot");
+        }
+
+        MODULEENTRY32 moduleEntry = { sizeof(moduleEntry) };
+        DWORD baseAddress = 0;
+
+        if (Module32First(hSnapshot, &moduleEntry)) {
+            do {
+                if (_stricmp(moduleEntry.szModule, moduleName.c_str()) == 0) {
+                    baseAddress = (DWORD)moduleEntry.modBaseAddr;
+                    break;
+                }
+            } while (Module32Next(hSnapshot, &moduleEntry));
+        }
+
+        CloseHandle(hSnapshot);
+        return baseAddress;
+    }
+    BOOL PidNameTest(DWORD processId, const std::string& moduleName) {
+        HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId);
+        if (hSnapshot == INVALID_HANDLE_VALUE) {
+            throw std::runtime_error("Failed to create module snapshot");
+        }
+        MODULEENTRY32 moduleEntry = { sizeof(moduleEntry) };
+        DWORD baseAddress = 0;
+
+        if (Module32First(hSnapshot, &moduleEntry)) {
+            do {
+                if (_stricmp(moduleEntry.szModule, moduleName.c_str()) == 0) {
+                    return true;
+                }
+            } while (Module32Next(hSnapshot, &moduleEntry));
+        }
+        return false;
+    }
+};
 
 int main(int argc, char* argv[]) {
-    //Install, if our program not named SkullGirls.exe
-    /*if (_tcscmp(argv[0], "-logtoconsole")*/
-    std::filesystem::path CCPath{ argv[0] };
-    if (!((CCPath.filename() == "SkullGirls.exe") or (CCPath.filename() == "Skullgirls.exe"))) {
-        std::cout << "We are not \"SkullGirls.exe\" must fix that" << '\n';
-        if (std::filesystem::exists(CCPath.parent_path() / "SkullGirls.exe")) {
-            std::cout << "SkullGirls.exe is exist, try to rename" << '\n';
-            std::filesystem::rename(CCPath.parent_path() / "SkullGirls.exe", CCPath.parent_path() / "ORIGINALSkullGirls.exe");
-         }
-        std::filesystem::rename(CCPath, CCPath.parent_path() / "SkullGirls.exe");
-        WinExec("SkullGirls.exe",0);
-        return 0;
-    }
 
     //ShowWindow(GetConsoleWindow(), SW_HIDE); //uncomment, if don't wanna see console
 
@@ -346,197 +176,173 @@ int main(int argc, char* argv[]) {
   \____|  \__,_|  \__|                                                                
                               
 )" << '\n';
-
-    int CCVersion{ 0 }; //CC Version
+    
     COORD HomeCord{ 0,23 };
     std::cout << "Author: ImpDi" << "\n";
-    std::cout << "Version: " << CCVersion << "\n";
+    std::cout << "Version: " << CURRENT_CC_VERSION << "\n";
 #ifdef _DEBUG
     std::cout << "CC_LunchName: " << argv[0] << '\n';
     HomeCord = { 0,24 };
 #endif // DEBUG
     std::cout << '\n';
-    bool DebugOn{ 0 }; // LaunchOptions
-    bool ReinstallAll{ 0 };
+   
+    //Install, if our program not named SkullGirls.exe
+    fs::path exePath(argv[0]);
+    if (!(exePath.filename().string() == OUR_EXE_NAME)) {
+        fs::path originalExe = exePath.parent_path() / TARGET_EXE_NAME;
 
+        if (fs::exists(originalExe)) {
+            fs::rename(originalExe, exePath.parent_path() / TARGET_EXE_NAME);
+        }
 
-    int count;
-    std::string LunchName = "ORIGINALSkullGirls.exe ";
+        fs::rename(exePath, exePath.parent_path() / OUR_EXE_NAME);
+        WinExec(OUR_EXE_NAME.c_str(), SW_SHOW);
+        return 0;
+    }
+
+    std::string LunchName = TARGET_EXE_NAME + " ";
+    std::string SteamLunchName = "start steam://run/" + std::to_string(SKULLGIRLS_STEAM_ID) + "//";
     if (argc != 1) {
-        for (count = 1; count < argc; count++) {
+        for (int count = 1; count < argc; count++) {
             if (_tcscmp(argv[count], "-logtoconsole") == 0) {
-                DebugOn = true;
+                DEBUG_ON = true;
                 std::cout << "We are gonna debug SG" << "\n";
             }
-            if (_tcscmp(argv[count], "-reinstall") == 0) {
-                ReinstallAll = true;
-                std::cout << "We are reinstall SG CC" << "\n";
-                break;
-            }
+            //if (_tcscmp(argv[count], "-reinstall") == 0) {
+            //    REINSTALL_ALL = true;
+            //    std::cout << "We are reinstall SG_CC" << "\n";
+            //    break;
+            //}
             LunchName += argv[count];
             LunchName += " ";
+            SteamLunchName += argv[count];
+            SteamLunchName += "%20";
         }
     }
-
-    std::cout << "Skullgirls_LunchName: " << LunchName << "\n";
-
-    std::filesystem::path my_Work_DirectoryPath = argv[0];
-
-    my_Work_DirectoryPath = my_Work_DirectoryPath.parent_path();
-
-    std::filesystem::path data01FolderPath = my_Work_DirectoryPath / "data01";
-
-    std::filesystem::path data02FolderPath = my_Work_DirectoryPath / "data02";
-
-    std::filesystem::path modsFolderPath = my_Work_DirectoryPath / "mods";
-
-    std::filesystem::path saveFilePath = my_Work_DirectoryPath / "saves_CC.json";
-
-    if (!(std::filesystem::exists(data01FolderPath))) {
-        std::cout << "We are NOT in SkullGirls directory?" << '\n';
-        std::cout << "\"data01\" directory doesn't exist" << '\n';
-        system("pause");
-        return 1;
-    }
-    else
+#ifdef NDEBUG
+    try
     {
-        std::cout << "We are in SkullGirls directory\n";
-        std::cout << "\"data01\" directory exist\n";
-    }
-
-    if (!(std::filesystem::exists(data02FolderPath))) {
-        std::filesystem::create_directory(data02FolderPath);
-        std::cout << "Create \"data02\" directory!" << '\n';
-    }
-    else {
-        std::cout << "\"data02\" directory exist" << '\n';
-    }
-
-    if (!(std::filesystem::exists(modsFolderPath))) {
-        std::filesystem::create_directory(modsFolderPath);
-        std::cout << "Create \"mods\" directory!" << '\n';
-    }
-    else {
-        std::cout << "\"mods\" directory exist" << '\n';
-    }
-    if (!(std::filesystem::exists(saveFilePath))) {
-        std::ofstream saveFile(saveFilePath);
-        if (saveFile.is_open()) {
-            saveFile << "{}";
-            std::cout << "Create \"saves_CC.json\" file!" << '\n';
-            saveFile.close();
-        }
-        else {
-            std::cout << "Can't create \"saves_CC.json\" file!" << '\n';
-            system("pause");
-            return 1;
+        if (!ProcessUtils::PidNameTest(ProcessUtils::getppid(), STEAM_NAME)) {
+            system(SteamLunchName.c_str());
         }
     }
-    else {
-        std::cout << "\"saves_CC.json\" exist" << '\n';
-    }
-
-    json savedatajson{};
-    //Read saveFile
-    std::ifstream saveFileRead(saveFilePath);
-    if (saveFileRead.is_open()) {
-        savedatajson = json::parse(saveFileRead);
-        saveFileRead.close();
-        std::cout << "SaveJson parsered." << '\n';
-    }
-    else {
-        std::cout << "Can't open \"saves_CC.json\" file!" << '\n';
-        system("pause");
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error: " << e.what() << "\n";
         return 1;
     }
+#endif
+
+        json savedata{NULL};
+        fs::path workDir = exePath.parent_path();
+        fs::path requiredDirs[] = {
+            workDir / "data01",
+            workDir / "data02",
+            workDir / "mods"
+        };
+
+        try {
+        // Проверка необходимых директорий
+        for (const auto& dir : requiredDirs) {
+            if (!fs::exists(dir)) {
+                if (!fs::create_directory(dir)) {
+                    throw std::runtime_error("Failed to create directory");
+                }
+                std::cout << "Created directory: " << dir << "\n";
+            }
+        }
+
+        // Создание файла сохранений, если его нет
+        fs::path saveFilePath = workDir / SAVE_FILE_NAME;
+        if (!fs::exists(saveFilePath)) {
+            std::ofstream file(saveFilePath);
+            if (!file) {
+                throw std::runtime_error("Failed to create save file");
+                return false;
+            }
+            std::cout << "Created save file: " << saveFilePath << "\n";
+            file.close();
+        }
+
+        std::ifstream saveFile(saveFilePath);
+        if (!saveFile) throw std::runtime_error("Failed to open save file");
+        savedata = json::parse(saveFile);
+        
+    }
+    catch (const fs::filesystem_error& e) {
+        std::cerr << "Filesystem error: " << e.what() << "\n";
+        return false;
+    }
+
 
 #ifdef _DEBUG    
     system("pause");
 #endif // DEBUG
     ClearScreen(HomeCord);
 
-    std::vector<Mod> vectorMod;
-    std::vector<size_t> vectorModlaunch;
-    std::vector<size_t> vectorModloop;
-    std::vector<size_t> vectorModDeinit;
+    std::vector<Mod> mods;
+    std::vector<size_t> launchMods, loopMods, deinitMods;
 
-
-
-    for (const std::filesystem::directory_entry& dir_entry : std::filesystem::directory_iterator(modsFolderPath)) {
-        
+    for (const auto& entry : fs::directory_iterator(MODS_DIR)) {
+        if (entry.path().extension() != ".lua") continue;
         lua_State* L = luaL_newstate();
         luaL_openlibs(L);
 
-        luaL_newlib(L, nsCCLib::ССlib);
-        lua_setglobal(L, "CCLib");
+        if (!L) {
+            std::cerr << "Failed to create Lua state for " << entry.path() << "\n";
+            continue;
+        }
 
-        std::filesystem::path dir_entry_path = dir_entry;
-        if (dir_entry_path.extension() == ".lua") {
-            if (luaL_dofile(L, dir_entry_path.string().c_str()) == LUA_OK) {
-                Mod CurrentMod(L);
-                std::cout << "[C] Executed " << dir_entry_path<< "\n";
-                if (!(savedatajson[CurrentMod.ModInfo.modName].is_null())) {
-                    std::cout << "[C] " << CurrentMod.ModInfo.modName << " Already has in savedata" << "\n";
-                    if (savedatajson[CurrentMod.ModInfo.modName]["Version"] < CurrentMod.ModInfo.modVerion) {
-                        std::cout << "[C] " << CurrentMod.ModInfo.modName << " NOT in actual version, so - Update" << "\n";
-                        CurrentMod.update();
-                        savedatajson[CurrentMod.ModInfo.modName]["Version"] = CurrentMod.ModInfo.modVerion;
-                        savedatajson[CurrentMod.ModInfo.modName]["Author"] = CurrentMod.ModInfo.modAuthor;
-                        savedatajson[CurrentMod.ModInfo.modName]["Path"] = CurrentMod.ModInfo.modPath;
-                    }
-                    else {
-                        std::cout << "[C] " << CurrentMod.ModInfo.modName << " Has actual version" << "\n";
-                    }
+        try {
+            luaL_newlib(L, nsCCLib::ССlib);
+            lua_setglobal(L, "CCLib");
+
+            if (luaL_dofile(L, entry.path().string().c_str()) != LUA_OK) {
+                throw std::runtime_error(lua_tostring(L, -1));
+            }
+            Mod CurrentMod(L);
+            std::cout << "[C] Loaded mod: " << entry.path() << "\n";
+
+            auto modData = savedata[CurrentMod.ModInfo.modName];
+
+            if (!modData.is_null()) {
+                if (modData["Version"] < CurrentMod.ModInfo.modVerion) {
+                    CurrentMod.update();
+                    modData["Version"] = CurrentMod.ModInfo.modVerion;
                 }
-                else {
-                    std::cout << "[C] We have a new mod. Try to save mod data in json" << "\n";
-                    CurrentMod.install();
-                    savedatajson[CurrentMod.ModInfo.modName]["Version"] = CurrentMod.ModInfo.modVerion;
-                    savedatajson[CurrentMod.ModInfo.modName]["Author"] = CurrentMod.ModInfo.modAuthor;
-                    savedatajson[CurrentMod.ModInfo.modName]["Path"] = CurrentMod.ModInfo.modPath;
-                }
-                CurrentMod.init();
-                vectorMod.push_back(CurrentMod);
-                
-                    lua_getglobal(L, "Mod"); // get foo on the stack
-                    lua_getfield(L, -1, "launch");
-
-                    if (lua_isfunction(L, -1) != 1) {
-                        std::cout << "[C] " << "We haven't Launch() func" << "\n";
-                    }
-                    else {
-                        vectorModlaunch.push_back(vectorMod.size()-1);
-                        
-                    }
-                    lua_getglobal(L, "Mod");
-                    lua_getfield(L, -1, "loop");
-
-                    if (lua_isfunction(L, -1) != 1) {
-                        std::cout << "[C] " << "We haven't Loop()  func" << "\n";
-                    }
-                    else {
-                        vectorModloop.push_back(vectorMod.size() - 1);
-                    }
-                    lua_getglobal(L, "Mod");
-                    lua_getfield(L, -1, "deinit");
-
-                    if (lua_isfunction(L, -1) != 1) {
-                        std::cout << "[C] " << "We haven't Deinit()  func" << "\n";
-                    }
-                    else {
-                        vectorModDeinit.push_back(vectorMod.size() - 1);
-                    }
             }
             else {
-                std::cout << "[C] Error reading script\n";
-                luaL_error(L, "Error: %s\n", lua_tostring(L, -1));
+                CurrentMod.install();
+                modData["Version"] = CurrentMod.ModInfo.modVerion;
+                modData["Author"] = CurrentMod.ModInfo.modAuthor;
+                modData["Path"] = CurrentMod.ModInfo.modPath;
             }
-        } 
+
+            CurrentMod.init();
+            size_t modIndex = mods.size();
+            mods.push_back(CurrentMod);
+            auto CheckFunction = [&](const char* funcName, std::vector<size_t>& vec) {
+                lua_getglobal(L, "Mod");
+                lua_getfield(L, -1, funcName);
+                if (lua_isfunction(L, -1)) {
+                    vec.push_back(modIndex);
+                }
+                lua_pop(L, 2);
+                };
+
+            CheckFunction("launch", launchMods);
+            CheckFunction("loop", loopMods);
+            CheckFunction("deinit", deinitMods);
+        }
+        catch (const std::exception& e) {
+            std::cerr << "[C] Error loading mod " << entry.path() << ": " << e.what() << "\n";
+            lua_close(L);
+        }
     }
     std::cout << "[C] Done Mod Init & Install & Update" << '\n';
 
-    std::ofstream saveFileWrite(saveFilePath);
-    saveFileWrite << savedatajson;
+    std::ofstream saveFileWrite(workDir / SAVE_FILE_NAME);
+    saveFileWrite << savedata;
     saveFileWrite.close();
 
     std::cout << "[C] Rewrite \"saves_CC.json\"" << '\n';
@@ -546,25 +352,28 @@ int main(int argc, char* argv[]) {
 #ifdef _DEBUG    
     system("pause");
 #endif // DEBUG
-
     ClearScreen(HomeCord);
 
 
-    for (const std::filesystem::directory_entry& dir_entry : std::filesystem::directory_iterator(data01FolderPath)) {
-        std::string i = dir_entry.path().filename().string();
-        if (dir_entry.path().extension() == ".gfs") {
-            if (!(std::filesystem::exists(data02FolderPath / i))) {
-                std::cout << "We haven't " << data02FolderPath / i << '\n';
-                if (std::filesystem::is_symlink(data02FolderPath / i)) {
-                    std::cout << "Symlink already exist" << '\n';
-                }
-                else
-                {
-                    std::filesystem::create_symlink(data01FolderPath / i, data02FolderPath / i);
-                    std::cout << "Symlink created" << '\n';
+    try {
+        for (const auto& entry : fs::directory_iterator(DATA02_DIR)) {
+            if (entry.path().extension() == ".gfs") {
+                auto target = entry.path();
+                if (!fs::exists(target)) {
+                    if (fs::is_symlink(target)) {
+                        std::cout << "Symlink already exists: " << target << '\n';
+                    }
+                    else {
+                        fs::create_symlink(DATA01_DIR / target.filename().string(), target);
+                        std::cout << "Created symlink: " << target << '\n';
+                    }
                 }
             }
         }
+    }
+    catch (const fs::filesystem_error& e) {
+        std::cerr << "Error creating symlinks: " << e.what() << '\n';
+        return false;
     }
 
 
@@ -588,81 +397,83 @@ int main(int argc, char* argv[]) {
         &SGpi)               // Pointer to PROCESS_INFORMATION structure
         )
     {
-        printf("CreateProcess failed (%d).\n", GetLastError());
+        std::cerr << "Failed to create process: " << GetLastError() << "\n";
         return 0;
     }
     std::cout << "We are lunch a game!" << "\n";
 
-    DWORD BaseAdress = GetModuleBaseAddress(SGpi.dwProcessId);
+    DWORD dwBaseAddress = GetModuleBaseAddress(SGpi.dwProcessId);
     std::cout << "Skullgirls_PID: " << std::hex << SGpi.dwProcessId << "\n";
-    std::cout << "Skullgirls_Base_Adress: " << std::hex << BaseAdress << "\n";
+    std::cout << "Skullgirls_Base_Adress: " << std::hex << dwBaseAddress << "\n";
 
 
 
-    bool dotgfs{ 1 };
-    bool dotsal{ 1 };
-    bool datafirst{ 1 };
-    //bool datassecond{ 1 };
-    bool salreplace{ 1 };
+    bool patches[4](true);
 
-    while (dotgfs or dotsal or datafirst or salreplace) {
-        //NewsBreaker(SGpi.hThread, SGpi.hProcess, BaseAdress, NEWS);
-        GFSValidathionBreaker(SGpi.hThread, SGpi.hProcess, BaseAdress, dotgfs);
-        SalValidathionBreaker(SGpi.hThread, SGpi.hProcess, BaseAdress, dotsal);
-        ChangeDataDirectoryFirstTime(SGpi.hThread, SGpi.hProcess, BaseAdress, datafirst);
-        ChangeSal(SGpi.hThread, SGpi.hProcess, BaseAdress, salreplace);
-        //RussianLanguage(SGpi.hThread, SGpi.hProcess, BaseAdress, russianlang);
-    }  
+    auto ApplyPatch = [&](auto patchFunc, bool& flag, const char* desc) {
+        patchFunc(SGpi.hThread, SGpi.hProcess, dwBaseAddress, flag);
+        };
 
-    for (size_t i : vectorModlaunch) {
-        vectorMod[i].launch();
+    while (std::any_of(std::begin(patches), std::end(patches), [](bool b) { return b; })) {
+        ApplyPatch(PachingUtils::NewsBreaker, patches[0], "News Breaker");
+        ApplyPatch(PachingUtils::GFSValidathionBreaker, patches[1], "GFS Validation");
+        ApplyPatch(PachingUtils::SalValidathionBreaker, patches[2], "GFS Validation");
+        ApplyPatch(PachingUtils::ChangeDataDirectoryFirstTime, patches[3], "GFS Validation");
+        
+    }
+
+    for (size_t i : launchMods) {
+        mods[i].launch();
     }
 
     std::cout << "Done modification SG" << "\n";
 
     #ifdef NDEBUG
-    if (vectorModloop.size() == 0)
+    if (loopMods.size() == 0 || deinitMods.size() == 0)
     {
         std::cout << "Goodbye!" << "\n";
         return 0;
+    }
+    for (auto& mod : mods) {
+        lua_close(mod.LuaState);
     }
     #endif
 
 
     //init something, thaw we did'n need to reinit them later
     DEBUG_EVENT DebugEv{};
-    if (DebugOn == 1) {
+    if (DEBUG_ON == 1) {
         DebugActiveProcess(SGpi.dwProcessId);
         DebugSetProcessKillOnExit(false);
     }
 
-    DWORD code{ 259 };
 
-    while (code == 259) {
-        GetExitCodeProcess(SGpi.hProcess, &code);
-        for (size_t i : vectorModloop) {
-            vectorMod[i].loop();
+    DWORD exitCode = STILL_ACTIVE;
+    while (exitCode == STILL_ACTIVE) {
+        GetExitCodeProcess(SGpi.hProcess, &exitCode);
+
+        for (size_t i : loopMods) {
+            mods[i].loop();
         }
-        //Debugger(DebugEv, SGpi.hThread, SGpi.hProcess, DebugOn);
-        //For infinity function 
-        //Sleep(500);
+
+        Sleep(100); // Небольшая пауза, чтобы не нагружать CPU
     }
 
     std::cout << "Skullgirls Wanna Exit" << "\n";
-    for (size_t i : vectorModDeinit) {
-        vectorMod[i].deinit();
+    for (size_t i : deinitMods) {
+        mods[i].deinit();
     }
+
     CloseHandle(SGpi.hProcess);
     CloseHandle(SGpi.hThread);
-    for (Mod i : vectorMod) {
-        lua_close(i.LuaState);
+
+    for (auto& mod : mods) {
+        lua_close(mod.LuaState);
     }
 
     std::cout << "Goodbye!" << "\n";
 #ifdef _DEBUG    
     Sleep(5000);
 #endif // DEBUG
-
     return 0;
-
 }
