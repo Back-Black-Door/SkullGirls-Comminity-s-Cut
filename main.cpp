@@ -7,7 +7,8 @@
 #include <cstdio>
 #include <fstream>
 #include <process.h>
-
+#include <thread>
+#include <functional>
 #include <filesystem>
 namespace fs = std::filesystem;
 
@@ -17,9 +18,10 @@ namespace fs = std::filesystem;
 #include "json.hpp"
 using json = nlohmann::json;
 
+#include "config.h"
 #include "modslualib.h"
 #include "Patching.h"
-#include "config.h"
+
 
 
 
@@ -134,20 +136,27 @@ namespace ProcessUtils {
         return baseAddress;
     }
     BOOL PidNameTest(DWORD processId, const std::string& moduleName) {
-        HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId);
+        DWORD dwModuleBaseAddress = 0;
+        HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId); // make snapshot of all modules within process
         if (hSnapshot == INVALID_HANDLE_VALUE) {
-            throw std::runtime_error("Failed to create module snapshot");
+            return false;
         }
-        MODULEENTRY32 moduleEntry = { sizeof(moduleEntry) };
-        DWORD baseAddress = 0;
+        MODULEENTRY32 ModuleEntry32 = { 0 };
+        ModuleEntry32.dwSize = sizeof(MODULEENTRY32);
 
-        if (Module32First(hSnapshot, &moduleEntry)) {
+        if (Module32First(hSnapshot, &ModuleEntry32)) //store first Module in ModuleEntry32
+        {
             do {
-                if (_stricmp(moduleEntry.szModule, moduleName.c_str()) == 0) {
+                if ((_tcscmp(ModuleEntry32.szModule, moduleName.c_str()) == 0)) // if Found Module matches Module we look for -> done!
+                {
+                    CloseHandle(hSnapshot);
                     return true;
                 }
-            } while (Module32Next(hSnapshot, &moduleEntry));
+            } while (Module32Next(hSnapshot, &ModuleEntry32)); // go through Module entries in Snapshot and store in ModuleEntry32
+
+
         }
+        CloseHandle(hSnapshot);
         return false;
     }
 };
@@ -175,21 +184,22 @@ int main(int argc, char* argv[]) {
  | |___  | |_| | | |_                                                                 
   \____|  \__,_|  \__|                                                                
                               
-)" << '\n';
+)" << std::endl;
     
     COORD HomeCord{ 0,23 };
-    std::cout << "Author: ImpDi" << "\n";
-    std::cout << "Version: " << CURRENT_CC_VERSION << "\n";
+    std::cout << "Author: ImpDi" << std::endl;
+    std::cout << "Version: " << CURRENT_CC_VERSION << std::endl;
 #ifdef _DEBUG
-    std::cout << "CC_LunchName: " << argv[0] << '\n';
+    std::cout << "CC_LunchName: " << argv[0] << std::endl;
     HomeCord = { 0,24 };
 #endif // DEBUG
-    std::cout << '\n';
+    std::cout << std::endl;
    
     //Install, if our program not named SkullGirls.exe
     fs::path exePath(argv[0]);
-    if (!(exePath.filename().string() == OUR_EXE_NAME)) {
-        fs::path originalExe = exePath.parent_path() / TARGET_EXE_NAME;
+    if (!((exePath.filename().string() == OUR_EXE_NAME) or
+        (exePath.filename().string() == "Skullgirls.exe"))) {
+        fs::path originalExe = exePath.parent_path() / OUR_EXE_NAME;
 
         if (fs::exists(originalExe)) {
             fs::rename(originalExe, exePath.parent_path() / TARGET_EXE_NAME);
@@ -206,11 +216,11 @@ int main(int argc, char* argv[]) {
         for (int count = 1; count < argc; count++) {
             if (_tcscmp(argv[count], "-logtoconsole") == 0) {
                 DEBUG_ON = true;
-                std::cout << "We are gonna debug SG" << "\n";
+                std::cout << "We are gonna debug SG" << std::endl;
             }
             //if (_tcscmp(argv[count], "-reinstall") == 0) {
             //    REINSTALL_ALL = true;
-            //    std::cout << "We are reinstall SG_CC" << "\n";
+            //    std::cout << "We are reinstall SG_CC" << std::endl;
             //    break;
             //}
             LunchName += argv[count];
@@ -224,53 +234,61 @@ int main(int argc, char* argv[]) {
     {
         if (!ProcessUtils::PidNameTest(ProcessUtils::getppid(), STEAM_NAME)) {
             system(SteamLunchName.c_str());
+            return 0;
         }
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Error: " << e.what() << "\n";
-        return 1;
+        std::cerr << "Error: " << e.what() << std::endl;
+        //return 1;
     }
 #endif
-
-        json savedata{NULL};
-        fs::path workDir = exePath.parent_path();
-        fs::path requiredDirs[] = {
-            workDir / "data01",
-            workDir / "data02",
-            workDir / "mods"
-        };
-
-        try {
+    
+    json savedata{NULL};
+    fs::path workDir = exePath.parent_path();
+    fs::path requiredDirs[] = {
+        workDir / "data01",
+        workDir / "data02",
+        workDir / "mods",
+    };
+    
+    try {
         // Проверка необходимых директорий
         for (const auto& dir : requiredDirs) {
             if (!fs::exists(dir)) {
                 if (!fs::create_directory(dir)) {
                     throw std::runtime_error("Failed to create directory");
                 }
-                std::cout << "Created directory: " << dir << "\n";
+                std::cout << "Created directory: " << dir << std::endl;
             }
         }
-
+        
         // Создание файла сохранений, если его нет
-        fs::path saveFilePath = workDir / SAVE_FILE_NAME;
-        if (!fs::exists(saveFilePath)) {
-            std::ofstream file(saveFilePath);
+        fs::path SAVE_FILE_PATH = workDir / SAVE_FILE_NAME;
+        if (!fs::exists(SAVE_FILE_PATH)) {
+            std::ofstream file(SAVE_FILE_PATH);
             if (!file) {
                 throw std::runtime_error("Failed to create save file");
                 return false;
             }
-            std::cout << "Created save file: " << saveFilePath << "\n";
+            file << "{}";
+            std::cout << "Created save file: " << SAVE_FILE_PATH << std::endl;
             file.close();
         }
-
-        std::ifstream saveFile(saveFilePath);
+        
+        std::ifstream saveFile(SAVE_FILE_PATH);
         if (!saveFile) throw std::runtime_error("Failed to open save file");
         savedata = json::parse(saveFile);
-        
+
+        fs::path SAL_FILE_PATH = workDir / "Salmon" / "FULL_SGCC.sal";
+         // Создание файла .sal, если его нет
+        if (!fs::exists(SAL_FILE_PATH)) {
+
+            fs::copy(SAL_FILE_PATH.parent_path() / "FULL_MODE.sal", SAL_FILE_PATH);
+        }
     }
     catch (const fs::filesystem_error& e) {
-        std::cerr << "Filesystem error: " << e.what() << "\n";
+        std::cerr << "Filesystem error: " << e.what() << std::endl;
         return false;
     }
 
@@ -283,13 +301,13 @@ int main(int argc, char* argv[]) {
     std::vector<Mod> mods;
     std::vector<size_t> launchMods, loopMods, deinitMods;
 
-    for (const auto& entry : fs::directory_iterator(MODS_DIR)) {
+    for (const auto& entry : fs::directory_iterator(MODS_DIR_PATH)) {
         if (entry.path().extension() != ".lua") continue;
         lua_State* L = luaL_newstate();
         luaL_openlibs(L);
 
         if (!L) {
-            std::cerr << "Failed to create Lua state for " << entry.path() << "\n";
+            std::cerr << "Failed to create Lua state for " << entry.path() << std::endl;
             continue;
         }
 
@@ -301,7 +319,7 @@ int main(int argc, char* argv[]) {
                 throw std::runtime_error(lua_tostring(L, -1));
             }
             Mod CurrentMod(L);
-            std::cout << "[C] Loaded mod: " << entry.path() << "\n";
+            std::cout << "[C] Loaded mod: " << entry.path() << std::endl;
 
             auto modData = savedata[CurrentMod.ModInfo.modName];
 
@@ -335,18 +353,18 @@ int main(int argc, char* argv[]) {
             CheckFunction("deinit", deinitMods);
         }
         catch (const std::exception& e) {
-            std::cerr << "[C] Error loading mod " << entry.path() << ": " << e.what() << "\n";
+            std::cerr << "[C] Error loading mod " << entry.path() << ": " << e.what() << std::endl;
             lua_close(L);
         }
     }
-    std::cout << "[C] Done Mod Init & Install & Update" << '\n';
+    std::cout << "[C] Done Mod Init & Install & Update" << std::endl;
 
     std::ofstream saveFileWrite(workDir / SAVE_FILE_NAME);
     saveFileWrite << savedata;
     saveFileWrite.close();
 
-    std::cout << "[C] Rewrite \"saves_CC.json\"" << '\n';
-    std::cout << "[C] Next messages probably in [C]" << '\n';
+    std::cout << "[C] Rewrite \"saves_CC.json\"" << std::endl;
+    std::cout << "[C] Next messages probably in [C]" << std::endl;
 
 
 #ifdef _DEBUG    
@@ -356,23 +374,23 @@ int main(int argc, char* argv[]) {
 
 
     try {
-        for (const auto& entry : fs::directory_iterator(DATA02_DIR)) {
+        for (const auto& entry : fs::directory_iterator(DATA01_DIR_PATH)) {
             if (entry.path().extension() == ".gfs") {
-                auto target = entry.path();
+                auto target = DATA02_DIR_PATH / entry.path().filename();
                 if (!fs::exists(target)) {
                     if (fs::is_symlink(target)) {
-                        std::cout << "Symlink already exists: " << target << '\n';
+                        std::cout << "Symlink already exists: " << target << std::endl;
                     }
                     else {
-                        fs::create_symlink(DATA01_DIR / target.filename().string(), target);
-                        std::cout << "Created symlink: " << target << '\n';
+                        fs::create_symlink(entry.path(), target);
+                        std::cout << "Created symlink: " << target << std::endl;
                     }
                 }
             }
         }
     }
     catch (const fs::filesystem_error& e) {
-        std::cerr << "Error creating symlinks: " << e.what() << '\n';
+        std::cerr << "Error creating symlinks: " << e.what() << std::endl;
         return false;
     }
 
@@ -397,41 +415,45 @@ int main(int argc, char* argv[]) {
         &SGpi)               // Pointer to PROCESS_INFORMATION structure
         )
     {
-        std::cerr << "Failed to create process: " << GetLastError() << "\n";
+        std::cerr << "Failed to create process: " << GetLastError() << std::endl;
         return 0;
     }
-    std::cout << "We are lunch a game!" << "\n";
+    std::cout << "We are lunch a game!" << std::endl;
 
     DWORD dwBaseAddress = GetModuleBaseAddress(SGpi.dwProcessId);
-    std::cout << "Skullgirls_PID: " << std::hex << SGpi.dwProcessId << "\n";
-    std::cout << "Skullgirls_Base_Adress: " << std::hex << dwBaseAddress << "\n";
+    std::cout << "Skullgirls_PID: " << std::hex << SGpi.dwProcessId << std::endl;
+    std::cout << "Skullgirls_Base_Adress: " << std::hex << dwBaseAddress << std::endl;
 
 
 
-    bool patches[4](true);
+    std::function<const bool()> functions[] = {
+        [=]() { return PachingUtils::GFSValidathionBreaker(SGpi.hThread, SGpi.hProcess, dwBaseAddress); },
+        [=]() { return PachingUtils::SalValidathionBreaker(SGpi.hThread, SGpi.hProcess, dwBaseAddress); },
+        [=]() { return PachingUtils::ChangeDataDirectoryFirstTime(SGpi.hThread, SGpi.hProcess, dwBaseAddress); },
+        [=]() { return PachingUtils::ChangeSal(SGpi.hThread, SGpi.hProcess, dwBaseAddress); } };
 
-    auto ApplyPatch = [&](auto patchFunc, bool& flag, const char* desc) {
-        patchFunc(SGpi.hThread, SGpi.hProcess, dwBaseAddress, flag);
-        };
+    std::vector<std::thread> threads;
 
-    while (std::any_of(std::begin(patches), std::end(patches), [](bool b) { return b; })) {
-        ApplyPatch(PachingUtils::NewsBreaker, patches[0], "News Breaker");
-        ApplyPatch(PachingUtils::GFSValidathionBreaker, patches[1], "GFS Validation");
-        ApplyPatch(PachingUtils::SalValidathionBreaker, patches[2], "GFS Validation");
-        ApplyPatch(PachingUtils::ChangeDataDirectoryFirstTime, patches[3], "GFS Validation");
-        
+    for (auto& func : functions) {
+        threads.emplace_back([&func]() {
+            while (!func());
+            });
+    }
+
+    for (auto& thread : threads) {
+        thread.join();
     }
 
     for (size_t i : launchMods) {
         mods[i].launch();
     }
 
-    std::cout << "Done modification SG" << "\n";
+    std::cout << "Done modification SG" << std::endl;
 
     #ifdef NDEBUG
     if (loopMods.size() == 0 || deinitMods.size() == 0)
     {
-        std::cout << "Goodbye!" << "\n";
+        std::cout << "Goodbye!" << std::endl;
         return 0;
     }
     for (auto& mod : mods) {
@@ -459,7 +481,7 @@ int main(int argc, char* argv[]) {
         Sleep(100); // Небольшая пауза, чтобы не нагружать CPU
     }
 
-    std::cout << "Skullgirls Wanna Exit" << "\n";
+    std::cout << "Skullgirls Wanna Exit" << std::endl;
     for (size_t i : deinitMods) {
         mods[i].deinit();
     }
@@ -471,7 +493,7 @@ int main(int argc, char* argv[]) {
         lua_close(mod.LuaState);
     }
 
-    std::cout << "Goodbye!" << "\n";
+    std::cout << "Goodbye!" << std::endl;
 #ifdef _DEBUG    
     Sleep(5000);
 #endif // DEBUG

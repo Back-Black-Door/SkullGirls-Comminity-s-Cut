@@ -1,7 +1,9 @@
 #include "Patching.h"
 
+extern const char SAL_FILE_NAME[14];
+
 namespace PachingUtils {
-    const void CreateNewPage(HANDLE& ThreadHande, HANDLE& ProcessHandle) {
+    const PVOID CreateNewPage(const HANDLE& ThreadHande, const HANDLE& ProcessHandle) {
 
         PVOID remoteBuffer;
         remoteBuffer = VirtualAllocEx(
@@ -11,67 +13,60 @@ namespace PachingUtils {
             MEM_COMMIT,     //flAllocationType
             PAGE_READWRITE  //flProtect
         );
-        std::cout << "New Page Base Adress: " << std::hex << remoteBuffer << "\n";
-
+        std::cout << "New Page Base Adress: " << std::hex << remoteBuffer << std::endl;
+        return remoteBuffer;
     }
 
-    const void NewsBreaker(HANDLE& ThreadHande, HANDLE& ProcessHandle, DWORD BaseAdress, bool& NEWS) {
-        if (NEWS == 0) return;
-        unsigned char NewNewsString[] = "SG_is_Still_Alive";
+    const bool NewsBreaker(const HANDLE& ThreadHande, const HANDLE& ProcessHandle, const DWORD BaseAdress) {
+        const unsigned char NewNewsString[] = "SG_is_Still_Alive";
         int NewsAdress{};
 
 
         ReadProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x00436E54), &NewsAdress, sizeof(NewsAdress), 0);
         if (NewsAdress == 0) {
-            NEWS = 1;
-            return;
+            return false;
         }
         WriteProcessMemory(ProcessHandle, (LPVOID)(NewsAdress), (LPVOID)NewNewsString, sizeof NewNewsString, NULL);
-        std::cout << "Breaking News!" << "\n";
-        NEWS = 0;
+        std::cout << "Breaking News!\n" << std::endl;
+        return true;
     }
-    const void GFSValidathionBreaker(HANDLE& ThreadHande, HANDLE& ProcessHandle, DWORD BaseAdress, bool& dotgfs) {
-        if (dotgfs == 0) return;
+    const bool GFSValidathionBreaker(const HANDLE& ThreadHande, const HANDLE& ProcessHandle, const DWORD BaseAdress) {
 
-        unsigned char JMP = { 0xEB };
+        const unsigned char JMP = { 0xEB };
         unsigned char JMPValue{ NULL };
 
         ReadProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x0011BE67), &JMPValue, 1, 0);
         if (JMPValue == NULL) {
-            dotgfs = 1;
-            return;
+            return false;
         }
         WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x0011BE67), &JMP, 1, NULL);
-        std::cout << "Breaking .gfs Validathion!" << "\n";
-        dotgfs = 0;
+        std::cout << "Breaking .gfs Validathion!\n";
+        return true;
     }
-    const void SalValidathionBreaker(HANDLE& ThreadHande, HANDLE& ProcessHandle, DWORD BaseAdress, bool& dotsal) {
-        if (dotsal == 0) return;
+    const bool SalValidathionBreaker(const HANDLE& ThreadHande, const HANDLE& ProcessHandle, const DWORD BaseAdress) {
 
-        unsigned char JMP = { 0xEB };
+        const unsigned char JMP = { 0xEB };
         unsigned char JMPValue{ NULL };
 
 
         ReadProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x5C0F4), &JMPValue, 1, 0);
         if (JMPValue == NULL) {
-            dotsal = 1;
-            return;
+            return false;
         }
         WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x5C0F4), &JMP, 1, NULL);
-        std::cout << "Breaking .sal Validathion!" << "\n";
-        dotsal = 0;
+        std::cout << "Breaking .sal Validathion!" << std::endl;
+        return true;
     }
 
-    const void ChangeDataDirectoryFirstTime(HANDLE& ThreadHande, HANDLE& ProcessHandle, DWORD BaseAdress, bool& data) {
-        if (data == 0) return;
-        unsigned char NewString[] = "/data02/";
+    const bool ChangeDataDirectoryFirstTime(const HANDLE& ThreadHande, const HANDLE& ProcessHandle, const DWORD BaseAdress) {
+
+        const unsigned char NewString[] = "/data02/";
         unsigned char OldString[sizeof NewString]{ NULL };
 
 
         ReadProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3e922c), &OldString, sizeof(OldString), 0);
         if (OldString == 0) {
-            data = 1;
-            return;
+            return false;
         }
 
         DWORD old;
@@ -95,19 +90,17 @@ namespace PachingUtils {
             &old
         );
 
-        std::cout << "Change Data Directory First Time" << "\n";
-        data = 0;
+        std::cout << "Change Data Directory First Time\n" ;
+        return true;
     }
-    const void ChangeDataDirectorySecondTime(HANDLE& ThreadHande, HANDLE& ProcessHandle, DWORD BaseAdress, bool& data) {
-        if (data == 0) return;
-        unsigned char NewString[] = "data02";
+    const bool ChangeDataDirectorySecondTime(const HANDLE& ThreadHande, const HANDLE& ProcessHandle, const DWORD BaseAdress) {
+        const unsigned char NewString[] = "data02";
         unsigned char OldString[sizeof NewString]{ NULL };
 
 
         ReadProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3efe20), &OldString, sizeof(OldString), 0);
         if (OldString == 0) {
-            data = 1;
-            return;
+            return false;
         }
 
         DWORD old;
@@ -130,21 +123,18 @@ namespace PachingUtils {
             PAGE_READONLY,
             &old
         );
-        std::cout << "Change Data Directory Second Time Time" << "\n";
-        std::cout << GetLastError() << "\n";
-        data = 0;
+        std::cout << "Change Data Directory Second Time Time\n";
+        std::cout << GetLastError() << std::endl;
+        return true;
     }
 
-    const void ChangeSal(HANDLE& ThreadHande, HANDLE& ProcessHandle, DWORD BaseAdress, bool& data) {
-        if (data == 0) return;
-        unsigned char NewString[] = "FULL_SGCC.sal";
-        unsigned char OldString[sizeof NewString]{ NULL };
+    const bool ChangeSal(const HANDLE& ThreadHande, const HANDLE& ProcessHandle, const DWORD BaseAdress) {
+        char OldString[sizeof(SAL_FILE_NAME)]{NULL};
 
 
         ReadProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3dbc7c), &OldString, sizeof(OldString), 0);
         if (OldString == 0) {
-            data = 1;
-            return;
+            return false;
         }
 
         DWORD old;
@@ -157,7 +147,7 @@ namespace PachingUtils {
             &old	// адрес для сохранения старых флагов
         );
 
-        WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3dbc7c), &NewString, sizeof NewString, 0);
+        WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3dbc7c), &SAL_FILE_NAME, sizeof SAL_FILE_NAME, 0);
 
         VirtualProtectEx
         (
@@ -168,15 +158,12 @@ namespace PachingUtils {
             &old	// адрес для сохранения старых флагов
         );
 
-        std::cout << "Change .sal File Name" << "\n";
-        data = 0;
+        std::cout << "Change .sal File Name\n";
+        return true;
     }
 
 
-    const void Debugger(DEBUG_EVENT& DebugEv, HANDLE& ThreadHande, HANDLE& ProcessHandle, bool& DebugOn) {
-        if (DebugOn == 0) {
-            return;
-        }
+    const void Debugger(DEBUG_EVENT& DebugEv, const HANDLE& ThreadHande, const HANDLE& ProcessHandle) {
         WaitForDebugEvent(&DebugEv, INFINITE);
         switch (DebugEv.dwDebugEventCode) {
         case OUTPUT_DEBUG_STRING_EVENT:
@@ -186,7 +173,7 @@ namespace PachingUtils {
 
             ReadProcessMemory(ProcessHandle, DebugEv.u.DebugString.lpDebugStringData, pBuffer, DebugEv.u.DebugString.nDebugStringLength, &bytesRead);
             //ClearScreen(COORD{ 0,15 });
-            std::cout << "Debug Output: " << pBuffer << "\n";
+            std::cout << "Debug Output: " << pBuffer << std::endl;
             free(pBuffer);
             break;
         }
@@ -226,7 +213,7 @@ namespace PachingUtils {
     //    WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x1ABA56), &Space1, sizeof(Space1), 0); //Space1
     //    WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x1ABB35), &Space2, sizeof(Space2), 0); //Space2
     //    WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x1ABCB5), &Space3, sizeof(Space3), 0); //Space3
-    //    std::cout << "Russian Language! " << "\n";
+    //    std::cout << "Russian Language! " << std::endl;
     //    data = 0;
     //}
 }

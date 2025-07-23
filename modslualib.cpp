@@ -4,28 +4,28 @@
 #include <iostream>
 
 Mod::Mod(lua_State* L) {
-    std::cout << "[C] Start Reading ModInfo" << '\n';
+    std::cout << "[C] Start Reading ModInfo" << std::endl;
     lua_getglobal(L, "ModInfo"); // get foo on the stack
     LuaState = L;
     if (lua_istable(L, -1)) {
         lua_getfield(L, -1, "ModName"); // get the field"foo_number", table is on top of the stack
         const char* ModNameC = lua_tostring(L, -1); // foo is on top of the stack, use -1
-        std::cout << "[C] Mode Name: " << ModNameC << '\n';
+        std::cout << "[C] Mode Name: " << ModNameC << std::endl;
         ModInfo.modName = ModNameC;
 
         lua_getfield(L, -2, "Version");; // get foo on the stack
         int VersionC = lua_tonumber(L, -1); // foo is on top of the stack, use -1
-        std::cout << "[C] Mode Version: " << VersionC << '\n';
+        std::cout << "[C] Mode Version: " << VersionC << std::endl;
         ModInfo.modVerion = VersionC;
 
         lua_getfield(L, -3, "Author"); // get foo on the stack
         const char* AuthorC = lua_tostring(L, -1); // foo is on top of the stack, use -1
-        std::cout << "[C] Mode Author: " << AuthorC << '\n';
+        std::cout << "[C] Mode Author: " << AuthorC << std::endl;
         ModInfo.modAuthor = AuthorC;
 
         lua_getfield(L, -4, "Path"); // get foo on the stack
         const char* PathC = lua_tostring(L, -1); // foo is on top of the stack, use -1
-        std::cout << "[C] Mode Path: " << PathC << '\n';
+        std::cout << "[C] Mode Path: " << PathC << std::endl;
         ModInfo.modPath = PathC;
     }
     else {
@@ -35,7 +35,7 @@ Mod::Mod(lua_State* L) {
 }
 
 const void Mod::Test() {
-    std::cout << "TestTest" << '\n';
+    std::cout << "TestTest" << std::endl;
 }
 
 const void Mod::init() {
@@ -43,7 +43,7 @@ const void Mod::init() {
     if (lua_istable(LuaState, -1)) {
         lua_getfield(LuaState, -1, "init");
         if (lua_isfunction(LuaState, -1) != 1) {
-            std::cout << "[C] " << "Haven't init Func" << "\n";
+            std::cout << "[C] " << "Haven't init Func" << std::endl;
             return;
         };
         if (lua_pcall(LuaState, 0, 0, 0) != 0) {
@@ -56,7 +56,7 @@ const void Mod::install() {
     if (lua_istable(LuaState, -1)) {
         lua_getfield(LuaState, -1, "install");
         if (lua_isfunction(LuaState, -1) != 1) {
-            std::cout << "[C] " << "Haven't install Func" << "\n";
+            std::cout << "[C] " << "Haven't install Func" << std::endl;
             return;
         };
         if (lua_pcall(LuaState, 0, 0, 0) != 0) {
@@ -69,7 +69,7 @@ const void Mod::loop() {
     if (lua_istable(LuaState, -1)) {
         lua_getfield(LuaState, -1, "loop");
         if (lua_isfunction(LuaState, -1) != 1) {
-            std::cout << "[C] " << "Haven't loop Func" << "\n";
+            std::cout << "[C] " << "Haven't loop Func" << std::endl;
             return;
         };
         if (lua_pcall(LuaState, 0, 0, 0) != 0) {
@@ -82,7 +82,7 @@ const void Mod::deinit() {
     if (lua_istable(LuaState, -1)) {
         lua_getfield(LuaState, -1, "deinit");
         if (lua_isfunction(LuaState, -1) != 1) {
-            std::cout << "[C] " << "Haven't deinit Func" << "\n";
+            std::cout << "[C] " << "Haven't deinit Func" << std::endl;
             return;
         };
         if (lua_pcall(LuaState, 0, 0, 0) != 0) {
@@ -95,7 +95,7 @@ const void Mod::update() {
     if (lua_istable(LuaState, -1)) {
         lua_getfield(LuaState, -1, "update");
         if (lua_isfunction(LuaState, -1) != 1) {
-            std::cout << "[C] " << "Haven't update Func" << "\n";
+            std::cout << "[C] " << "Haven't update Func" << std::endl;
             return;
         };
         if (lua_pcall(LuaState, 0, 0, 0) != 0) {
@@ -109,7 +109,7 @@ const void Mod::launch() {
         lua_getfield(LuaState, -1, "launch");
 
         if (lua_isfunction(LuaState, -1) != 1) {
-            std::cout << "[C] " << "Haven't launch Func" << "\n";
+            std::cout << "[C] " << "Haven't launch Func" << std::endl;
             return;
         };
 
