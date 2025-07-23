@@ -281,6 +281,11 @@
       <SubType>
       </SubType>
     </None>
+    <None Include="example.lua" />
+    <None Include="lualibideas.md">
+      <SubType>
+      </SubType>
+    </None>
     <None Include="sol\.editorconfig" />
     <None Include="todo.md">
       <SubType>
