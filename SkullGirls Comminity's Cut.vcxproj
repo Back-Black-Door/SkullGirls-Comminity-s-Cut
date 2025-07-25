@@ -276,8 +276,9 @@
     <ClInclude Include="sol\wrapper.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Skullgirls\mods\test.lua" />
     <None Include=".gitignore" />
-    <None Include="CFunc.md">
+    <None Include="CClib.md">
       <SubType>
       </SubType>
     </None>

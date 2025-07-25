@@ -18,3 +18,4 @@ extern bool REINSTALL_ALL{ 0 };
 #define DATA01_DIR_PATH requiredDirs[0]
 #define DATA02_DIR_PATH requiredDirs[1]
 #define MODS_DIR_PATH requiredDirs[2]
+

@@ -23,9 +23,6 @@ using json = nlohmann::json;
 #include "Patching.h"
 
 
-
-
-
 void ClearScreen(COORD homeCoords)
 {
     HANDLE                     hStdOut;
@@ -61,105 +58,6 @@ void ClearScreen(COORD homeCoords)
     /* Move the cursor home */
     SetConsoleCursorPosition(hStdOut, homeCoords);
 }
-
-DWORD GetModuleBaseAddress(DWORD pID) {
-    DWORD dwModuleBaseAddress = 0;
-    while (dwModuleBaseAddress == 0) {
-        HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pID); // make snapshot of all modules within process
-        MODULEENTRY32 ModuleEntry32 = { 0 };
-        ModuleEntry32.dwSize = sizeof(MODULEENTRY32);
-
-        if (Module32First(hSnapshot, &ModuleEntry32)) //store first Module in ModuleEntry32
-        {
-            do {
-                if (_tcscmp(ModuleEntry32.szModule, "ORIGINALSkullGirls.exe") == 0) // if Found Module matches Module we look for -> done!
-                {
-                    dwModuleBaseAddress = (DWORD)ModuleEntry32.modBaseAddr;
-                    break;
-                }
-            } while (Module32Next(hSnapshot, &ModuleEntry32)); // go through Module entries in Snapshot and store in ModuleEntry32
-
-
-        }
-    }
-    //CloseHandle(hSnapshot);
-    return dwModuleBaseAddress;
-}
-
-namespace ProcessUtils {
-    DWORD getppid()
-    {
-        HANDLE hSnapshot;
-        PROCESSENTRY32 pe32;
-        DWORD ppid = 0, pid = GetCurrentProcessId();
-
-        hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-        __try {
-            if (hSnapshot == INVALID_HANDLE_VALUE) __leave;
-
-            ZeroMemory(&pe32, sizeof(pe32));
-            pe32.dwSize = sizeof(pe32);
-            if (!Process32First(hSnapshot, &pe32)) __leave;
-
-            do {
-                if (pe32.th32ProcessID == pid) {
-                    ppid = pe32.th32ParentProcessID;
-                    break;
-                }
-            } while (Process32Next(hSnapshot, &pe32));
-
-        }
-        __finally {
-            if (hSnapshot != INVALID_HANDLE_VALUE) CloseHandle(hSnapshot);
-        }
-        return ppid;
-    }
-    DWORD GetModuleBaseAddress(DWORD processId, const std::string& moduleName) {
-        HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId);
-        if (hSnapshot == INVALID_HANDLE_VALUE) {
-            throw std::runtime_error("Failed to create module snapshot");
-        }
-
-        MODULEENTRY32 moduleEntry = { sizeof(moduleEntry) };
-        DWORD baseAddress = 0;
-
-        if (Module32First(hSnapshot, &moduleEntry)) {
-            do {
-                if (_stricmp(moduleEntry.szModule, moduleName.c_str()) == 0) {
-                    baseAddress = (DWORD)moduleEntry.modBaseAddr;
-                    break;
-                }
-            } while (Module32Next(hSnapshot, &moduleEntry));
-        }
-
-        CloseHandle(hSnapshot);
-        return baseAddress;
-    }
-    BOOL PidNameTest(DWORD processId, const std::string& moduleName) {
-        DWORD dwModuleBaseAddress = 0;
-        HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId); // make snapshot of all modules within process
-        if (hSnapshot == INVALID_HANDLE_VALUE) {
-            return false;
-        }
-        MODULEENTRY32 ModuleEntry32 = { 0 };
-        ModuleEntry32.dwSize = sizeof(MODULEENTRY32);
-
-        if (Module32First(hSnapshot, &ModuleEntry32)) //store first Module in ModuleEntry32
-        {
-            do {
-                if ((_tcscmp(ModuleEntry32.szModule, moduleName.c_str()) == 0)) // if Found Module matches Module we look for -> done!
-                {
-                    CloseHandle(hSnapshot);
-                    return true;
-                }
-            } while (Module32Next(hSnapshot, &ModuleEntry32)); // go through Module entries in Snapshot and store in ModuleEntry32
-
-
-        }
-        CloseHandle(hSnapshot);
-        return false;
-    }
-};
 
 int main(int argc, char* argv[]) {
 
@@ -232,7 +130,7 @@ int main(int argc, char* argv[]) {
 #ifdef NDEBUG
     try
     {
-        if (!ProcessUtils::PidNameTest(ProcessUtils::getppid(), STEAM_NAME)) {
+        if (!PachingUtils::PidNameTest(PachingUtils::getppid(), STEAM_NAME)) {
             system(SteamLunchName.c_str());
             return 0;
         }
@@ -313,13 +211,16 @@ int main(int argc, char* argv[]) {
 
         try {
             luaL_newlib(L, nsCCLib::ССlib);
+            push_vars(L, nsCCLib::mylib_vars);
             lua_setglobal(L, "CCLib");
 
-            if (luaL_dofile(L, entry.path().string().c_str()) != LUA_OK) {
-                throw std::runtime_error(lua_tostring(L, -1));
+            if (luaL_loadfile(L, entry.path().string().c_str()) != LUA_OK || lua_pcall(L, 0, 0, 0) != LUA_OK) {
+                std::string errorMsg = lua_tostring(L, -1);
+                lua_pop(L, 1);  // Чистим стек
+                throw std::runtime_error("[LUA] " + errorMsg);
             }
             Mod CurrentMod(L);
-            std::cout << "[C] Loaded mod: " << entry.path() << std::endl;
+            std::cout << "[C] Opened mod: " << entry.path() << std::endl;
 
             auto modData = savedata[CurrentMod.ModInfo.modName];
 
@@ -353,7 +254,7 @@ int main(int argc, char* argv[]) {
             CheckFunction("deinit", deinitMods);
         }
         catch (const std::exception& e) {
-            std::cerr << "[C] Error loading mod " << entry.path() << ": " << e.what() << std::endl;
+            std::cerr << "[C] Error loading mod: \n" << e.what() << std::endl;
             lua_close(L);
         }
     }
@@ -394,13 +295,9 @@ int main(int argc, char* argv[]) {
         return false;
     }
 
-
-    STARTUPINFO SGsi;
-    PROCESS_INFORMATION SGpi;
-
-    ZeroMemory(&SGsi, sizeof(SGsi));
-    SGsi.cb = sizeof(SGsi);
-    ZeroMemory(&SGpi, sizeof(SGpi));
+    ZeroMemory(&SGProccesInfo.SGsi, sizeof(SGProccesInfo.SGsi));
+    SGProccesInfo.SGsi.cb = sizeof(SGProccesInfo.SGsi);
+    ZeroMemory(&SGProccesInfo.SGpi, sizeof(SGProccesInfo.SGpi));
 
     if (!CreateProcess(
         NULL,    // No module name (use command line)
@@ -411,8 +308,8 @@ int main(int argc, char* argv[]) {
         NULL,                // No creation flags
         NULL,                // Use parent's environment block
         NULL,                // Use parent's starting directory 
-        &SGsi,               // Pointer to STARTUPINFO structure
-        &SGpi)               // Pointer to PROCESS_INFORMATION structure
+        &SGProccesInfo.SGsi,               // Pointer to STARTUPINFO structure
+        &SGProccesInfo.SGpi)               // Pointer to PROCESS_INFORMATION structure
         )
     {
         std::cerr << "Failed to create process: " << GetLastError() << std::endl;
@@ -420,17 +317,17 @@ int main(int argc, char* argv[]) {
     }
     std::cout << "We are lunch a game!" << std::endl;
 
-    DWORD dwBaseAddress = GetModuleBaseAddress(SGpi.dwProcessId);
-    std::cout << "Skullgirls_PID: " << std::hex << SGpi.dwProcessId << std::endl;
-    std::cout << "Skullgirls_Base_Adress: " << std::hex << dwBaseAddress << std::endl;
+    SGProccesInfo.dwBaseAddress = PachingUtils::GetModuleBaseAddress(SGProccesInfo.SGpi.dwProcessId);
+    std::cout << "Skullgirls_PID: " << std::hex << SGProccesInfo.SGpi.dwProcessId << std::endl;
+    std::cout << "Skullgirls_Base_Adress: " << std::hex << SGProccesInfo.dwBaseAddress << std::endl;
 
 
 
     std::function<const bool()> functions[] = {
-        [=]() { return PachingUtils::GFSValidathionBreaker(SGpi.hThread, SGpi.hProcess, dwBaseAddress); },
-        [=]() { return PachingUtils::SalValidathionBreaker(SGpi.hThread, SGpi.hProcess, dwBaseAddress); },
-        [=]() { return PachingUtils::ChangeDataDirectoryFirstTime(SGpi.hThread, SGpi.hProcess, dwBaseAddress); },
-        [=]() { return PachingUtils::ChangeSal(SGpi.hThread, SGpi.hProcess, dwBaseAddress); } };
+        [=]() { return PachingUtils::GFSValidathionBreaker(SGProccesInfo.SGpi.hThread, SGProccesInfo.SGpi.hProcess, SGProccesInfo.dwBaseAddress); },
+        [=]() { return PachingUtils::SalValidathionBreaker(SGProccesInfo.SGpi.hThread, SGProccesInfo.SGpi.hProcess, SGProccesInfo.dwBaseAddress); },
+        [=]() { return PachingUtils::ChangeDataDirectoryFirstTime(SGProccesInfo.SGpi.hThread, SGProccesInfo.SGpi.hProcess, SGProccesInfo.dwBaseAddress); },
+        [=]() { return PachingUtils::ChangeSal(SGProccesInfo.SGpi.hThread, SGProccesInfo.SGpi.hProcess, SGProccesInfo.dwBaseAddress); } };
 
     std::vector<std::thread> threads;
 
@@ -443,9 +340,14 @@ int main(int argc, char* argv[]) {
     for (auto& thread : threads) {
         thread.join();
     }
-
     for (size_t i : launchMods) {
-        mods[i].launch();
+        try {
+            mods[i].launch();
+        }
+        catch (const std::exception& e) {
+            std::cerr << "[C] Error loading mod: \n" << e.what() << std::endl;
+            lua_close(mods[i].LuaState);
+        }
     }
 
     std::cout << "Done modification SG" << std::endl;
@@ -465,17 +367,30 @@ int main(int argc, char* argv[]) {
     //init something, thaw we did'n need to reinit them later
     DEBUG_EVENT DebugEv{};
     if (DEBUG_ON == 1) {
-        DebugActiveProcess(SGpi.dwProcessId);
+        DebugActiveProcess(SGProccesInfo.SGpi.dwProcessId);
         DebugSetProcessKillOnExit(false);
+
+        for (Mod i : mods) {
+            std::cout << i.ModInfo.modName << std::endl;
+            std::cout << i.ModInfo.modVerion << std::endl;
+            std::cout << i.ModInfo.modAuthor << std::endl;
+            std::cout << i.ModInfo.modPath << std::endl;
+        }
     }
 
 
     DWORD exitCode = STILL_ACTIVE;
     while (exitCode == STILL_ACTIVE) {
-        GetExitCodeProcess(SGpi.hProcess, &exitCode);
+        GetExitCodeProcess(SGProccesInfo.SGpi.hProcess, &exitCode);
 
         for (size_t i : loopMods) {
-            mods[i].loop();
+            try {
+                mods[i].loop();
+            }
+            catch (const std::exception& e) {
+                std::cerr << "[C] Error loading mod: \n" << e.what() << std::endl;
+                lua_close(mods[i].LuaState);
+            }
         }
 
         Sleep(100); // Небольшая пауза, чтобы не нагружать CPU
@@ -483,11 +398,14 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Skullgirls Wanna Exit" << std::endl;
     for (size_t i : deinitMods) {
-        mods[i].deinit();
+        try {
+            mods[i].deinit();
+        }
+        catch (const std::exception& e) {
+            std::cerr << "[C] Error loading mod: \n" << e.what() << std::endl;
+            lua_close(mods[i].LuaState);
+        }
     }
-
-    CloseHandle(SGpi.hProcess);
-    CloseHandle(SGpi.hThread);
 
     for (auto& mod : mods) {
         lua_close(mod.LuaState);

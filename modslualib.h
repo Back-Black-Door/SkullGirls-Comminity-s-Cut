@@ -3,6 +3,9 @@
 #include <lua.hpp>
 #include <string>
 #include <filesystem>
+#include "Patching.h"
+
+
 
 class Mod {
 	public:
@@ -24,10 +27,46 @@ class Mod {
 	const void launch();
 };
 
+typedef enum {
+	VAR_NUMBER,
+	VAR_INTEGER,
+	VAR_STRING,
+	VAR_BOOLEAN,
+	VAR_NIL,
+	VAR_LIGHTUSERDATA
+} VarType;
+
 namespace nsCCLib {
-	int my_add(lua_State* L);
+	typedef struct {
+		const char* name;  // Имя переменной
+		VarType type;      // Тип (из enum)
+		union {
+			lua_Number num;     // LUA_TNUMBER
+			lua_Integer integer;// LUA_TINTEGER (Lua 5.3+)
+			const char* str;     // LUA_TSTRING
+			int boolean;         // LUA_TBOOLEAN
+			void* lightud;       // LUA_TLIGHTUSERDATA
+		} value;
+	} luaL_Var;
+
+	static const luaL_Var mylib_vars[] = {
+	{NULL, VAR_NIL, {0}}
+	};
+
+	int test(lua_State* L);
+	int GameBaseAdress(lua_State* L);
+	int ReadAddressStr(lua_State* L);
+	int ReadAddressNum(lua_State* L);
+	int WriteAddressStr(lua_State* L);
 	static const luaL_Reg ССlib[] = {
-	  {"add", my_add}, // Функция `add` в Lua будет вызывать `my_add` из C++
+	  {"test", test}, // Функция `add` в Lua будет вызывать `my_add` из C++
+	  {"GameBaseAdress", GameBaseAdress},
+	  {"ReadAddressStr", ReadAddressStr},
+	  {"ReadAddressNum", ReadAddressNum},
+	  {"WriteAddressStr", WriteAddressStr},
 	  {nullptr, nullptr} // Маркер конца
 	};
+
 }
+
+void push_vars(lua_State* L, const nsCCLib::luaL_Var* vars);

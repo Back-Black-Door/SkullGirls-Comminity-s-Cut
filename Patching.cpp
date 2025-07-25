@@ -3,6 +3,81 @@
 extern const char SAL_FILE_NAME[14];
 
 namespace PachingUtils {
+    const DWORD getppid()
+    {
+        HANDLE hSnapshot;
+        PROCESSENTRY32 pe32;
+        DWORD ppid = 0, pid = GetCurrentProcessId();
+
+        hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        __try {
+            if (hSnapshot == INVALID_HANDLE_VALUE) __leave;
+
+            ZeroMemory(&pe32, sizeof(pe32));
+            pe32.dwSize = sizeof(pe32);
+            if (!Process32First(hSnapshot, &pe32)) __leave;
+
+            do {
+                if (pe32.th32ProcessID == pid) {
+                    ppid = pe32.th32ParentProcessID;
+                    break;
+                }
+            } while (Process32Next(hSnapshot, &pe32));
+
+        }
+        __finally {
+            if (hSnapshot != INVALID_HANDLE_VALUE) CloseHandle(hSnapshot);
+        }
+        return ppid;
+    }
+    const DWORD GetModuleBaseAddress(DWORD pID) {
+        DWORD dwModuleBaseAddress = 0;
+        while (dwModuleBaseAddress == 0) {
+            HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pID); // make snapshot of all modules within process
+            MODULEENTRY32 ModuleEntry32 = { 0 };
+            ModuleEntry32.dwSize = sizeof(MODULEENTRY32);
+
+            if (Module32First(hSnapshot, &ModuleEntry32)) //store first Module in ModuleEntry32
+            {
+                do {
+                    if (_tcscmp(ModuleEntry32.szModule, "ORIGINALSkullGirls.exe") == 0) // if Found Module matches Module we look for -> done!
+                    {
+                        dwModuleBaseAddress = (DWORD)ModuleEntry32.modBaseAddr;
+                        break;
+                    }
+                } while (Module32Next(hSnapshot, &ModuleEntry32)); // go through Module entries in Snapshot and store in ModuleEntry32
+
+
+            }
+        }
+        //CloseHandle(hSnapshot);
+        return dwModuleBaseAddress;
+    }
+    const BOOL PidNameTest(DWORD processId, const std::string& moduleName) {
+        DWORD dwModuleBaseAddress = 0;
+        HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId); // make snapshot of all modules within process
+        if (hSnapshot == INVALID_HANDLE_VALUE) {
+            return false;
+        }
+        MODULEENTRY32 ModuleEntry32 = { 0 };
+        ModuleEntry32.dwSize = sizeof(MODULEENTRY32);
+
+        if (Module32First(hSnapshot, &ModuleEntry32)) //store first Module in ModuleEntry32
+        {
+            do {
+                if ((_tcscmp(ModuleEntry32.szModule, moduleName.c_str()) == 0)) // if Found Module matches Module we look for -> done!
+                {
+                    CloseHandle(hSnapshot);
+                    return true;
+                }
+            } while (Module32Next(hSnapshot, &ModuleEntry32)); // go through Module entries in Snapshot and store in ModuleEntry32
+
+
+        }
+        CloseHandle(hSnapshot);
+        return false;
+    }
+
     const PVOID CreateNewPage(const HANDLE& ThreadHande, const HANDLE& ProcessHandle) {
 
         PVOID remoteBuffer;
@@ -54,7 +129,7 @@ namespace PachingUtils {
             return false;
         }
         WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x5C0F4), &JMP, 1, NULL);
-        std::cout << "Breaking .sal Validathion!" << std::endl;
+        std::cout << "Breaking .sal Validathion!\n" ;
         return true;
     }
 

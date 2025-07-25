@@ -47,7 +47,9 @@ const void Mod::init() {
             return;
         };
         if (lua_pcall(LuaState, 0, 0, 0) != 0) {
-            luaL_error(LuaState, "Error: %s\n", lua_tostring(LuaState, -1));
+            std::string errorMsg = lua_tostring(LuaState, -1);
+            lua_pop(LuaState, 1);  // Чистим стек
+            throw std::runtime_error("[LUA] " + errorMsg);
         }
     }
 }
@@ -60,7 +62,9 @@ const void Mod::install() {
             return;
         };
         if (lua_pcall(LuaState, 0, 0, 0) != 0) {
-            luaL_error(LuaState, "Error: %s\n", lua_tostring(LuaState, -1));
+            std::string errorMsg = lua_tostring(LuaState, -1);
+            lua_pop(LuaState, 1);  // Чистим стек
+            throw std::runtime_error("[LUA] " + errorMsg);
         }
     }
 }
@@ -73,7 +77,9 @@ const void Mod::loop() {
             return;
         };
         if (lua_pcall(LuaState, 0, 0, 0) != 0) {
-            luaL_error(LuaState, "Error: %s\n", lua_tostring(LuaState, -1));
+            std::string errorMsg = lua_tostring(LuaState, -1);
+            lua_pop(LuaState, 1);  // Чистим стек
+            throw std::runtime_error("[LUA] " + errorMsg);
         }
     }
 }
@@ -86,7 +92,9 @@ const void Mod::deinit() {
             return;
         };
         if (lua_pcall(LuaState, 0, 0, 0) != 0) {
-            luaL_error(LuaState, "Error: %s\n", lua_tostring(LuaState, -1));
+            std::string errorMsg = lua_tostring(LuaState, -1);
+            lua_pop(LuaState, 1);  // Чистим стек
+            throw std::runtime_error("[LUA] " + errorMsg);
         }
     }
 }
@@ -99,7 +107,9 @@ const void Mod::update() {
             return;
         };
         if (lua_pcall(LuaState, 0, 0, 0) != 0) {
-            luaL_error(LuaState, "Error: %s\n", lua_tostring(LuaState, -1));
+            std::string errorMsg = lua_tostring(LuaState, -1);
+            lua_pop(LuaState, 1);  // Чистим стек
+            throw std::runtime_error("[LUA] " + errorMsg);
         }
     }
 }
@@ -114,17 +124,126 @@ const void Mod::launch() {
         };
 
         if (lua_pcall(LuaState, 0, 0, 0) != 0) {
-            luaL_error(LuaState, "Error: %s\n", lua_tostring(LuaState, -1));
+            std::string errorMsg = lua_tostring(LuaState, -1);
+            lua_pop(LuaState, 1);  // Чистим стек
+            throw std::runtime_error("[LUA] " + errorMsg);
         }
     }
 }
 
 namespace nsCCLib {
-      int my_add(lua_State* L) {
-          int a = lua_tonumber(L, 1); // Первый аргумент
-          int b = lua_tonumber(L, 2); // Второй аргумент
-          int result = a + b;
-          lua_pushnumber(L, result); // Возвращаем результат
+      int test(lua_State* L) {
+          lua_pushnumber(L, 1); // Возвращаем результат
           return 1; // Количество возвращаемых значений
       }
+      int GameBaseAdress(lua_State* L) {
+          int result = SGProccesInfo.dwBaseAddress;
+          lua_pushnumber(L, result); // Возвращаем результат
+          return 1; // Количество возвращаемых значенийк
+      }
+      int ReadAddressNum(lua_State* L) {
+
+          if (lua_gettop(L) != 1) {
+              return luaL_error(L, "Expected 1 arguments: address.");
+          }
+
+          // Проверяем типы аргументов
+          if (!lua_isnumber(L, 1)) {
+              return luaL_error(L, "Argument must be number.");
+          }
+
+          const uintptr_t address = static_cast<uintptr_t>(lua_tonumber(L, 1));
+
+          int result;
+
+          BOOL success = ReadProcessMemory(
+              SGProccesInfo.SGpi.hProcess,
+              reinterpret_cast<LPCVOID>(address),
+              &result,
+              sizeof(result),
+              0
+          );
+          lua_pushnumber(L, result); // Возвращаем результат
+          return 1; // Количество возвращаемых значенийк
+      }
+      int ReadAddressStr(lua_State* L) {
+
+          if (lua_gettop(L) < 2) {
+              return luaL_error(L, "Expected 2 arguments: address and size");
+          }
+
+          // Проверяем типы аргументов
+          if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
+              return luaL_error(L, "Both arguments must be numbers.");
+          }
+
+          const uintptr_t address = static_cast<uintptr_t>(lua_tonumber(L, 1));
+          const size_t size = static_cast<size_t>(lua_tonumber(L, 2));
+
+          std::string result(size, '\0');
+
+          ReadProcessMemory(
+              SGProccesInfo.SGpi.hProcess,
+              reinterpret_cast<LPCVOID>(address),
+              result.data(),
+              size,
+              0
+          );
+          lua_pushlstring(L, result.data(), size); // Возвращаем результат
+          return 1; // Количество возвращаемых значенийк
+      }
+      int WriteAddressStr(lua_State* L) {
+
+          if (lua_gettop(L) < 2) {
+              return luaL_error(L, "Expected 2 arguments: address and string");
+          }
+
+          // Проверяем типы аргументов
+          if (!lua_isnumber(L, 1)) {
+              return luaL_error(L, "First argument must be number.");
+          }
+          if (!lua_isstring(L, 2)) {
+              return luaL_error(L, "Second argument must be string.");
+          }
+
+          const uintptr_t address = static_cast<uintptr_t>(lua_tonumber(L, 1));
+          const std::string str = static_cast<std::string>(lua_tostring(L, 2));
+
+          BOOL Success = WriteProcessMemory(
+              SGProccesInfo.SGpi.hProcess,
+              reinterpret_cast<LPVOID>(address),
+              str.data(),
+              str.size(),
+              0);
+          lua_pushboolean(L, Success); // Возвращаем результат
+          return 1; // Количество возвращаемых значенийк
+      }
+}
+
+void push_vars(lua_State* L, const nsCCLib::luaL_Var* vars) {
+    for (; vars->name != NULL; vars++) {
+        switch (vars->type) {
+        case VAR_NUMBER:
+            lua_pushnumber(L, vars->value.num);
+            break;
+        case VAR_INTEGER:
+            lua_pushinteger(L, vars->value.integer);
+            break;
+        case VAR_STRING:
+            lua_pushstring(L, vars->value.str);  // Осторожно: str должен быть валидным!
+            break;
+        case VAR_BOOLEAN:
+            lua_pushboolean(L, vars->value.boolean);
+            break;
+        case VAR_NIL:
+            lua_pushnil(L);
+            break;
+        case VAR_LIGHTUSERDATA:
+            lua_pushlightuserdata(L, vars->value.lightud);
+            break;
+        default:
+            luaL_error(L, "Unknown variable type: %d", vars->type);
+        }
+        lua_setfield(L, -2, vars->name);  // Добавляем в таблицу
+    }
 }
