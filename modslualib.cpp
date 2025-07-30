@@ -136,7 +136,7 @@ namespace nsCCLib {
           lua_pushnumber(L, 1); // Возвращаем результат
           return 1; // Количество возвращаемых значений
       }
-      int GameBaseAdress(lua_State* L) {
+      int GetGameBaseAdress(lua_State* L) {
           int result = SGProccesInfo.dwBaseAddress;
           lua_pushnumber(L, result); // Возвращаем результат
           return 1; // Количество возвращаемых значенийк
@@ -216,6 +216,34 @@ namespace nsCCLib {
               str.size(),
               0);
           lua_pushboolean(L, Success); // Возвращаем результат
+          return 1; // Количество возвращаемых значенийк
+      }
+      int WriteAddressNum(lua_State* L) {
+
+          if (lua_gettop(L) < 2) {
+              return luaL_error(L, "Expected 2 arguments: address and number");
+          }
+
+          // Проверяем типы аргументов
+          if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
+              return luaL_error(L, "Both arguments must be numbers.");
+          }
+
+          const uintptr_t address = static_cast<uintptr_t>(lua_tonumber(L, 1));
+          const int num = static_cast<int>(lua_tonumber(L, 2));
+
+          BOOL Success = WriteProcessMemory(
+              SGProccesInfo.SGpi.hProcess,
+              reinterpret_cast<LPVOID>(address),
+              &num,
+              sizeof(num),
+              0);
+          lua_pushboolean(L, Success); // Возвращаем результат
+          return 1; // Количество возвращаемых значенийк
+      }
+      int GetWorkingDirectory(lua_State* L) {
+          std::string result = workDir.string();
+          lua_pushstring(L, result.c_str()); // Возвращаем результат
           return 1; // Количество возвращаемых значенийк
       }
 }

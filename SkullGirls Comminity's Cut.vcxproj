@@ -163,6 +163,7 @@
   <ItemGroup>
     <ClInclude Include="config.h" />
     <ClInclude Include="json.hpp" />
+    <ClInclude Include="main.h" />
     <ClInclude Include="modslualib.h" />
     <ClInclude Include="Patching.h" />
     <ClInclude Include="sol\abort.hpp" />

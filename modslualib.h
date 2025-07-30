@@ -3,6 +3,7 @@
 #include <lua.hpp>
 #include <string>
 #include <filesystem>
+#include "main.h"
 #include "Patching.h"
 
 
@@ -41,8 +42,8 @@ namespace nsCCLib {
 		const char* name;  // Имя переменной
 		VarType type;      // Тип (из enum)
 		union {
-			lua_Number num;     // LUA_TNUMBER
-			lua_Integer integer;// LUA_TINTEGER (Lua 5.3+)
+			lua_Number num;      // LUA_TNUMBER
+			lua_Integer integer; // LUA_TINTEGER (Lua 5.3+)
 			const char* str;     // LUA_TSTRING
 			int boolean;         // LUA_TBOOLEAN
 			void* lightud;       // LUA_TLIGHTUSERDATA
@@ -54,16 +55,20 @@ namespace nsCCLib {
 	};
 
 	int test(lua_State* L);
-	int GameBaseAdress(lua_State* L);
+	int GetGameBaseAdress(lua_State* L);
 	int ReadAddressStr(lua_State* L);
 	int ReadAddressNum(lua_State* L);
 	int WriteAddressStr(lua_State* L);
+	int WriteAddressNum(lua_State* L);
+	int GetWorkingDirectory(lua_State* L);
 	static const luaL_Reg ССlib[] = {
 	  {"test", test}, // Функция `add` в Lua будет вызывать `my_add` из C++
-	  {"GameBaseAdress", GameBaseAdress},
+	  {"GetGameBaseAdress", GetGameBaseAdress},
 	  {"ReadAddressStr", ReadAddressStr},
 	  {"ReadAddressNum", ReadAddressNum},
 	  {"WriteAddressStr", WriteAddressStr},
+	  {"WriteAddressNum", WriteAddressNum},
+	  {"GetWorkingDirectory", GetWorkingDirectory},
 	  {nullptr, nullptr} // Маркер конца
 	};
 

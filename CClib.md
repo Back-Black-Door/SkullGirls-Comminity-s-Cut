@@ -1,16 +1,16 @@
 ﻿# Patching
-## Functions
-### GameBaseAdress() 
+## Patching
+### GetGameBaseAdress() 
 The returned number is Game Base Adress
 
 ```
 launch = function ()           
-    local i = CCLib.GameBaseAdress()
+    local i = CCLib.GetGameBaseAdress()
     print("[Lua] GameBaseAdress: ")
     print(i)
     end;
 
-Output: 
+Output: 10747904
 ```
 ### ReadAdressStr (number adress, number size)
 Return string from game memory from __adress__.
@@ -18,12 +18,12 @@ Return string from game memory from __adress__.
 Exemple:
 ```
 launch = function ()           
-    local i = CCLib.ReadAdressStr(0x00841984, 4 )
+    local i = CCLib.ReadAdressStr(0x00841984, 7)
     print("[Lua] Value at "Skullgirls.exe" + 0x00841984: ")
     print(i)
     end;
 
-Output: 
+Output: "exemple"
 ```
 ### ReadAdressNum (number adress)
 Return number(int) from game memory from __adress__.
@@ -32,15 +32,15 @@ Exemple:
 ```
 launch = function ()           
     local i = CCLib.ReadAdressNum(0x00841984)
-    print("[Lua] Value at "Skullgirls.exe" + 0x00841984:")
+    print("[Lua] Value at 0x00841984:")
     print(i)
     end;
 
-Output: 
+Output: 0
 ```
 
 ### WriteAdressStr (number adress, string message)
-Write string to game memory from __adress__.
+Write string to game memory from __adress__. Return true(bool) if success.
 
 Exemple:
 ```
@@ -48,11 +48,41 @@ launch = function ()
     local str = "SkullGirls_CC_Is_Good!"
     CCLib.WriteAdressStr(0x00841984, str )
     local i = CCLib.ReadAdressStr(0x00841984, #str )
-    print("[Lua] Value at "Skullgirls.exe" + 0x00841984: ")
+    print("[Lua] Value at 0x00841984: ")
     print(i)
     end;
 
-Output: 
+Output: "SkullGirls_CC_Is_Good"
 ```
 
-## Constants
+### WriteAdressNum (number adress, number num)
+Write Number to game memory from __adress__. Return true(bool) if success.
+
+Exemple:
+```
+launch = function ()  
+    CCLib.WriteAdressNum(0x00841984, 123 )
+    local i = CCLib.ReadAdressNum(0x00841984)
+    print("[Lua] Value at 0x00841984: ")
+    print(i)
+    end;
+
+Output: "123"
+```
+
+# Filesystem
+## Filesystem
+
+### GetWorkingDirectory()
+Write Number to game memory from __adress__. Return true(bool) if success.
+
+Exemple:
+```
+launch = function ()  
+    local i = CCLib.GetWorkingDirectory()
+    print("[Lua] My Working Directory: ")
+    print(i)
+    end;
+
+Output: "123"
+```

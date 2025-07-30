@@ -1,26 +1,4 @@
-#include <Windows.h>
-#include <iostream>
-#include <string>
-#include <TlHelp32.h>
-#include <tchar.h>
-#include <array>
-#include <cstdio>
-#include <fstream>
-#include <process.h>
-#include <thread>
-#include <functional>
-#include <filesystem>
-namespace fs = std::filesystem;
-
-#pragma comment(lib, "lua54.lib")
-#include <lua.hpp>
-
-#include "json.hpp"
-using json = nlohmann::json;
-
-#include "config.h"
-#include "modslualib.h"
-#include "Patching.h"
+#include "main.h"
 
 
 void ClearScreen(COORD homeCoords)
@@ -84,7 +62,6 @@ int main(int argc, char* argv[]) {
                               
 )" << std::endl;
     
-    COORD HomeCord{ 0,23 };
     std::cout << "Author: ImpDi" << std::endl;
     std::cout << "Version: " << CURRENT_CC_VERSION << std::endl;
 #ifdef _DEBUG
@@ -143,7 +120,7 @@ int main(int argc, char* argv[]) {
 #endif
     
     json savedata{NULL};
-    fs::path workDir = exePath.parent_path();
+    workDir = exePath.parent_path();
     fs::path requiredDirs[] = {
         workDir / "data01",
         workDir / "data02",

@@ -14,8 +14,3 @@ extern const int SKULLGIRLS_STEAM_ID = 245170;
 extern bool DEBUG_ON{ 0 }; // LaunchOptions
 extern bool REINSTALL_ALL{ 0 };
 
-//For requiredDirs
-#define DATA01_DIR_PATH requiredDirs[0]
-#define DATA02_DIR_PATH requiredDirs[1]
-#define MODS_DIR_PATH requiredDirs[2]
-
