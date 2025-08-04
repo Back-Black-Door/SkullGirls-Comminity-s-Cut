@@ -1,5 +1,9 @@
 #include "main.h"
+#include "config.h"
+#include "modslualib.h"
+#include "Patching.h"
 
+using namespace main_paths;
 
 void ClearScreen(COORD homeCoords)
 {
@@ -37,6 +41,31 @@ void ClearScreen(COORD homeCoords)
     SetConsoleCursorPosition(hStdOut, homeCoords);
 }
 
+bool Start_Skullgirls(std::string LaunchName) {
+    ZeroMemory(&SGProccesInfo.SGsi, sizeof(SGProccesInfo.SGsi));
+    SGProccesInfo.SGsi.cb = sizeof(SGProccesInfo.SGsi);
+    ZeroMemory(&SGProccesInfo.SGpi, sizeof(SGProccesInfo.SGpi));
+
+    if (!CreateProcess(
+        NULL,    // No module name (use command line)
+        const_cast<char*>(LaunchName.c_str()),                // Command line
+        NULL,                // Process handle not inheritable
+        NULL,                // Thread handle not inheritable
+        FALSE,               // Set handle inheritance to FALSE
+        NULL,                // No creation flags
+        NULL,                // Use parent's environment block
+        NULL,                // Use parent's starting directory 
+        &SGProccesInfo.SGsi,               // Pointer to STARTUPINFO structure
+        &SGProccesInfo.SGpi)               // Pointer to PROCESS_INFORMATION structure
+        )
+    {
+        std::cerr << "Failed to create process: " << GetLastError() << std::endl;
+        return 1;
+    }
+    std::cout << "We lunched the game!" << std::endl;
+    return 0;
+}
+
 int main(int argc, char* argv[]) {
 
     //ShowWindow(GetConsoleWindow(), SW_HIDE); //uncomment, if don't wanna see console
@@ -64,23 +93,24 @@ int main(int argc, char* argv[]) {
     
     std::cout << "Author: ImpDi" << std::endl;
     std::cout << "Version: " << CURRENT_CC_VERSION << std::endl;
+    COORD console_home_coord{ 0, 23 };
 #ifdef _DEBUG
-    std::cout << "CC_LunchName: " << argv[0] << std::endl;
-    HomeCord = { 0,24 };
+    std::cout << "LunchName: " << argv[0] << std::endl;
+    console_home_coord = { 0,24 };
 #endif // DEBUG
     std::cout << std::endl;
    
     //Install, if our program not named SkullGirls.exe
-    fs::path exePath(argv[0]);
-    if (!((exePath.filename().string() == OUR_EXE_NAME) or
-        (exePath.filename().string() == "Skullgirls.exe"))) {
-        fs::path originalExe = exePath.parent_path() / OUR_EXE_NAME;
+    exe_path = argv[0];
+    if (!((exe_path.filename().string() == OUR_EXE_NAME) or
+        (exe_path.filename().string() == "Skullgirls.exe"))) {
+        original_exe_path = exe_path.parent_path() / OUR_EXE_NAME;
 
-        if (fs::exists(originalExe)) {
-            fs::rename(originalExe, exePath.parent_path() / TARGET_EXE_NAME);
+        if (fs::exists(original_exe_path)) {
+            fs::rename(original_exe_path, original_exe_path.parent_path() / TARGET_EXE_NAME);
         }
 
-        fs::rename(exePath, exePath.parent_path() / OUR_EXE_NAME);
+        fs::rename(original_exe_path, original_exe_path.parent_path() / OUR_EXE_NAME);
         WinExec(OUR_EXE_NAME.c_str(), SW_SHOW);
         return 0;
     }
@@ -98,6 +128,10 @@ int main(int argc, char* argv[]) {
             //    std::cout << "We are reinstall SG_CC" << std::endl;
             //    break;
             //}
+              if (_tcscmp(argv[count], "-originalgame") == 0) {
+                LAUNCH_ORIGINAL_GAME = true;
+                std::cout << "We are lauch original SG" << std::endl;
+            }
             LunchName += argv[count];
             LunchName += " ";
             SteamLunchName += argv[count];
@@ -118,13 +152,20 @@ int main(int argc, char* argv[]) {
         //return 1;
     }
 #endif
-    
+    if (LAUNCH_ORIGINAL_GAME) {
+        Start_Skullgirls(LunchName);
+        return 0;
+    }
     json savedata{NULL};
-    workDir = exePath.parent_path();
+    work_dir_path = exe_path.parent_path();
+    data01_dir_path = work_dir_path / "data01";
+    data02_dir_path = work_dir_path / "data02";
+    mods_dir_path = work_dir_path / "mods";
+   
     fs::path requiredDirs[] = {
-        workDir / "data01",
-        workDir / "data02",
-        workDir / "mods",
+        data01_dir_path,
+        data02_dir_path,
+        mods_dir_path,
     };
     
     try {
@@ -139,28 +180,21 @@ int main(int argc, char* argv[]) {
         }
         
         // Создание файла сохранений, если его нет
-        fs::path SAVE_FILE_PATH = workDir / SAVE_FILE_NAME;
-        if (!fs::exists(SAVE_FILE_PATH)) {
-            std::ofstream file(SAVE_FILE_PATH);
+        save_file_path = work_dir_path / SAVE_FILE_NAME;
+        if (!fs::exists(save_file_path)) {
+            std::ofstream file(save_file_path);
             if (!file) {
                 throw std::runtime_error("Failed to create save file");
                 return false;
             }
             file << "{}";
-            std::cout << "Created save file: " << SAVE_FILE_PATH << std::endl;
+            std::cout << "Created save file: " << save_file_path << std::endl;
             file.close();
         }
         
-        std::ifstream saveFile(SAVE_FILE_PATH);
-        if (!saveFile) throw std::runtime_error("Failed to open save file");
-        savedata = json::parse(saveFile);
-
-        fs::path SAL_FILE_PATH = workDir / "Salmon" / "FULL_SGCC.sal";
-         // Создание файла .sal, если его нет
-        if (!fs::exists(SAL_FILE_PATH)) {
-
-            fs::copy(SAL_FILE_PATH.parent_path() / "FULL_MODE.sal", SAL_FILE_PATH);
-        }
+        std::ifstream save_file_stream(save_file_path);
+        if (!save_file_stream) throw std::runtime_error("Failed to open save file");
+        savedata = json::parse(save_file_stream);
     }
     catch (const fs::filesystem_error& e) {
         std::cerr << "Filesystem error: " << e.what() << std::endl;
@@ -171,12 +205,9 @@ int main(int argc, char* argv[]) {
 #ifdef _DEBUG    
     system("pause");
 #endif // DEBUG
-    ClearScreen(HomeCord);
+    ClearScreen(console_home_coord);
 
-    std::vector<Mod> mods;
-    std::vector<size_t> launchMods, loopMods, deinitMods;
-
-    for (const auto& entry : fs::directory_iterator(MODS_DIR_PATH)) {
+    for (const auto& entry : fs::directory_iterator(mods_dir_path)) {
         if (entry.path().extension() != ".lua") continue;
         lua_State* L = luaL_newstate();
         luaL_openlibs(L);
@@ -237,7 +268,7 @@ int main(int argc, char* argv[]) {
     }
     std::cout << "[C] Done Mod Init & Install & Update" << std::endl;
 
-    std::ofstream saveFileWrite(workDir / SAVE_FILE_NAME);
+    std::ofstream saveFileWrite(save_file_path);
     saveFileWrite << savedata;
     saveFileWrite.close();
 
@@ -248,13 +279,12 @@ int main(int argc, char* argv[]) {
 #ifdef _DEBUG    
     system("pause");
 #endif // DEBUG
-    ClearScreen(HomeCord);
-
+    ClearScreen(console_home_coord);
 
     try {
-        for (const auto& entry : fs::directory_iterator(DATA01_DIR_PATH)) {
+        for (const auto& entry : fs::directory_iterator(data01_dir_path)) {
             if (entry.path().extension() == ".gfs") {
-                auto target = DATA02_DIR_PATH / entry.path().filename();
+                auto target = data02_dir_path / entry.path().filename();
                 if (!fs::exists(target)) {
                     if (fs::is_symlink(target)) {
                         std::cout << "Symlink already exists: " << target << std::endl;
@@ -272,27 +302,7 @@ int main(int argc, char* argv[]) {
         return false;
     }
 
-    ZeroMemory(&SGProccesInfo.SGsi, sizeof(SGProccesInfo.SGsi));
-    SGProccesInfo.SGsi.cb = sizeof(SGProccesInfo.SGsi);
-    ZeroMemory(&SGProccesInfo.SGpi, sizeof(SGProccesInfo.SGpi));
-
-    if (!CreateProcess(
-        NULL,    // No module name (use command line)
-        const_cast<char*>(LunchName.c_str()),                // Command line
-        NULL,                // Process handle not inheritable
-        NULL,                // Thread handle not inheritable
-        FALSE,               // Set handle inheritance to FALSE
-        NULL,                // No creation flags
-        NULL,                // Use parent's environment block
-        NULL,                // Use parent's starting directory 
-        &SGProccesInfo.SGsi,               // Pointer to STARTUPINFO structure
-        &SGProccesInfo.SGpi)               // Pointer to PROCESS_INFORMATION structure
-        )
-    {
-        std::cerr << "Failed to create process: " << GetLastError() << std::endl;
-        return 0;
-    }
-    std::cout << "We are lunch a game!" << std::endl;
+    Start_Skullgirls(LunchName);
 
     SGProccesInfo.dwBaseAddress = PachingUtils::GetModuleBaseAddress(SGProccesInfo.SGpi.dwProcessId);
     std::cout << "Skullgirls_PID: " << std::hex << SGProccesInfo.SGpi.dwProcessId << std::endl;
@@ -303,8 +313,7 @@ int main(int argc, char* argv[]) {
     std::function<const bool()> functions[] = {
         [=]() { return PachingUtils::GFSValidathionBreaker(SGProccesInfo.SGpi.hThread, SGProccesInfo.SGpi.hProcess, SGProccesInfo.dwBaseAddress); },
         [=]() { return PachingUtils::SalValidathionBreaker(SGProccesInfo.SGpi.hThread, SGProccesInfo.SGpi.hProcess, SGProccesInfo.dwBaseAddress); },
-        [=]() { return PachingUtils::ChangeDataDirectoryFirstTime(SGProccesInfo.SGpi.hThread, SGProccesInfo.SGpi.hProcess, SGProccesInfo.dwBaseAddress); },
-        [=]() { return PachingUtils::ChangeSal(SGProccesInfo.SGpi.hThread, SGProccesInfo.SGpi.hProcess, SGProccesInfo.dwBaseAddress); } };
+        [=]() { return PachingUtils::ChangeDataDirectoryFirstTime(SGProccesInfo.SGpi.hThread, SGProccesInfo.SGpi.hProcess, SGProccesInfo.dwBaseAddress); } };
 
     std::vector<std::thread> threads;
 

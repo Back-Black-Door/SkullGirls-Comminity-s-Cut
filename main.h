@@ -1,31 +1,24 @@
 #pragma once
-#include <Windows.h>
-#include <iostream>
-#include <string>
-#include <TlHelp32.h>
-#include <tchar.h>
-#include <array>
-#include <cstdio>
-#include <fstream>
-#include <process.h>
-#include <thread>
-#include <functional>
-#include <filesystem>
-namespace fs = std::filesystem;
+#include "include.h"
 
-#pragma comment(lib, "lua54.lib")
-#include <lua.hpp>
+struct ProcessInfo {
+	STARTUPINFO SGsi;
+	PROCESS_INFORMATION SGpi;
+	DWORD dwBaseAddress;
 
-#include "json.hpp"
-using json = nlohmann::json;
+	~ProcessInfo() {
+		CloseHandle(SGpi.hThread);
+		CloseHandle(SGpi.hProcess);
+	}
+};
 
-#include "config.h"
-#include "modslualib.h"
-#include "Patching.h"
-
-#define DATA01_DIR_PATH requiredDirs[0]
-#define DATA02_DIR_PATH requiredDirs[1]
-#define MODS_DIR_PATH requiredDirs[2]
-
-COORD HomeCord{ 0,23 };
-fs::path workDir;
+namespace main_paths {
+	inline fs::path original_exe_path;
+	inline fs::path exe_path;
+	inline fs::path work_dir_path;
+	inline fs::path data01_dir_path;
+	inline fs::path data02_dir_path;
+	inline fs::path mods_dir_path;
+	inline fs::path save_file_path;
+};
+inline ProcessInfo SGProccesInfo{};

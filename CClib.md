@@ -74,7 +74,7 @@ Output: "123"
 ## Filesystem
 
 ### GetWorkingDirectory()
-Write Number to game memory from __adress__. Return true(bool) if success.
+Return string with full path to SkullGirls Directory (...\steamapps\common\Skullgirls)
 
 Exemple:
 ```
@@ -82,6 +82,24 @@ launch = function ()
     local i = CCLib.GetWorkingDirectory()
     print("[Lua] My Working Directory: ")
     print(i)
+    end;
+
+Output: "123"
+```
+
+### gfs_addfiles("gfsarhivename", path to folder with files)
+Add Files to gfs archive in data02 (Create copy from data01, if doesn't exist, and than add)
+
+Return True, if success
+
+Exemple:
+```
+init = function ()  
+    local i = CCLib.GetWorkingDirectory()
+    i = i .. "\\mods\\test\\core"
+    print("[Lua] My Files Directory: ")
+    print(i)
+    CCLib.gfs_addfiles("core", i)
     end;
 
 Output: "123"

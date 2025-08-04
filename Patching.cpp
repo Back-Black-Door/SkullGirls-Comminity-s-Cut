@@ -1,6 +1,5 @@
 #include "Patching.h"
-
-extern const char SAL_FILE_NAME[14];
+#include "config.h"
 
 namespace PachingUtils {
     const DWORD getppid()

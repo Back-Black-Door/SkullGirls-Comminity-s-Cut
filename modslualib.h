@@ -1,12 +1,6 @@
 #pragma once
-#pragma comment(lib, "lua54.lib")
-#include <lua.hpp>
-#include <string>
-#include <filesystem>
+#include "include.h"
 #include "main.h"
-#include "Patching.h"
-
-
 
 class Mod {
 	public:
@@ -27,6 +21,9 @@ class Mod {
 	const void update();
 	const void launch();
 };
+
+inline std::vector<Mod> mods;
+inline std::vector<size_t> launchMods, loopMods, deinitMods;
 
 typedef enum {
 	VAR_NUMBER,
@@ -50,9 +47,7 @@ namespace nsCCLib {
 		} value;
 	} luaL_Var;
 
-	static const luaL_Var mylib_vars[] = {
-	{NULL, VAR_NIL, {0}}
-	};
+	extern const luaL_Var mylib_vars[];
 
 	int test(lua_State* L);
 	int GetGameBaseAdress(lua_State* L);
@@ -61,14 +56,23 @@ namespace nsCCLib {
 	int WriteAddressStr(lua_State* L);
 	int WriteAddressNum(lua_State* L);
 	int GetWorkingDirectory(lua_State* L);
-	static const luaL_Reg ССlib[] = {
-	  {"test", test}, // Функция `add` в Lua будет вызывать `my_add` из C++
+	int GFS_addfiles(lua_State* L);
+	extern const luaL_Reg ССlib[];
+
+	inline const luaL_Var mylib_vars[] = {
+		//{"test", VAR_STRING, {.str = "Test"}},
+		{NULL, VAR_NIL, {0}}
+	};
+
+	inline const luaL_Reg ССlib[] = {
+	 // {"test", test}, // Функция `test` в Lua будет вызывать `test` из C++
 	  {"GetGameBaseAdress", GetGameBaseAdress},
 	  {"ReadAddressStr", ReadAddressStr},
 	  {"ReadAddressNum", ReadAddressNum},
 	  {"WriteAddressStr", WriteAddressStr},
 	  {"WriteAddressNum", WriteAddressNum},
 	  {"GetWorkingDirectory", GetWorkingDirectory},
+	  {"gfs_addfiles", GFS_addfiles},
 	  {nullptr, nullptr} // Маркер конца
 	};
 

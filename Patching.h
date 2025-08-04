@@ -1,8 +1,5 @@
 #pragma once
-#include <Windows.h>
-#include <iostream>
-#include <TlHelp32.h>
-#include <tchar.h>
+#include "include.h"
 
 namespace PachingUtils {
 	const DWORD getppid();
@@ -17,15 +14,3 @@ namespace PachingUtils {
 	const void Debugger(DEBUG_EVENT& DebugEv, const HANDLE& ThreadHande, const HANDLE& ProcessHandle);
 }
 
-struct ProcessInfo {
-	STARTUPINFO SGsi;
-	PROCESS_INFORMATION SGpi;
-	DWORD dwBaseAddress;
-
-	~ProcessInfo() {
-		CloseHandle(SGpi.hThread);
-		CloseHandle(SGpi.hProcess);
-	}
-};
-
-inline ProcessInfo SGProccesInfo;

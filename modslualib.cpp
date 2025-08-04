@@ -1,7 +1,9 @@
 #include "modslualib.h"
 #pragma comment(lib, "lua54.lib")
 #include <lua.hpp>
-#include <iostream>
+
+#include "main.h"
+#include "gfs.h"
 
 Mod::Mod(lua_State* L) {
     std::cout << "[C] Start Reading ModInfo" << std::endl;
@@ -242,8 +244,39 @@ namespace nsCCLib {
           return 1; // Количество возвращаемых значенийк
       }
       int GetWorkingDirectory(lua_State* L) {
-          std::string result = workDir.string();
+          std::string result = main_paths::work_dir_path.string();
           lua_pushstring(L, result.c_str()); // Возвращаем результат
+          return 1; // Количество возвращаемых значенийк
+      }
+      int GFS_addfiles(lua_State* L) {
+
+          if (lua_gettop(L) < 2) {
+              return luaL_error(L, "Expected 2 arguments: gfs archive name and path to files");
+          }
+
+          // Проверяем типы аргументов
+          if (!lua_isstring(L, 1) || !lua_isstring(L, 2)) {
+              return luaL_error(L, "Both arguments must be string.");
+          }
+
+          const std::string gfsname = static_cast<std::string>(lua_tostring(L, 1));
+          const fs::path filepath = static_cast<std::string>(lua_tostring(L, 2));
+          fs::path targetdata02 = main_paths::data02_dir_path / gfsname;
+          fs::path from;
+          
+          targetdata02.replace_extension(".gfs");
+            if (fs::is_symlink(targetdata02)) {
+                fs::remove(targetdata02);
+                from = (main_paths::data01_dir_path / gfsname).replace_extension(".gfs");
+            } 
+            else {
+                from = targetdata02;
+            }
+              GFS target_gfs(from);
+              GFS AddFiles(filepath);
+              target_gfs.add_files(AddFiles);
+              target_gfs.write_GFS(targetdata02);
+          lua_pushboolean (L, 1); // Возвращаем результат
           return 1; // Количество возвращаемых значенийк
       }
 }
