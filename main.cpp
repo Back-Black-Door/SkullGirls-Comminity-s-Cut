@@ -2,7 +2,7 @@
 #include "config.h"
 #include "modslualib.h"
 #include "Patching.h"
-#include "gfs.h"
+#include "formats/gfs.h"
 
 using namespace main_paths;
 

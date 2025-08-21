@@ -3,8 +3,8 @@
 #include <lua.hpp>
 #include <memory>
 #include "main.h"
-#include "gfs.h"
-#include "gbs.h"
+#include "formats/gfs.h"
+#include "formats/gbs.h"
 
 Mod::Mod(lua_State* L) {
     std::cout << "[C] Start Reading ModInfo" << std::endl;
