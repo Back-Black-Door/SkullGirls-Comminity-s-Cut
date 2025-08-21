@@ -1,9 +1,10 @@
 #include "modslualib.h"
 #pragma comment(lib, "lua54.lib")
 #include <lua.hpp>
-
+#include <memory>
 #include "main.h"
 #include "gfs.h"
+#include "gbs.h"
 
 Mod::Mod(lua_State* L) {
     std::cout << "[C] Start Reading ModInfo" << std::endl;
@@ -248,38 +249,192 @@ namespace nsCCLib {
           lua_pushstring(L, result.c_str()); // Возвращаем результат
           return 1; // Количество возвращаемых значенийк
       }
-      int GFS_addfiles(lua_State* L) {
+      int GFS_addfile(lua_State* L) {
 
-          if (lua_gettop(L) < 2) {
-              return luaL_error(L, "Expected 2 arguments: gfs archive name and path to files");
+          if (lua_gettop(L) < 3) {
+              return luaL_error(L, "Expected 3 arguments: gfs archive name,relative path and path to files");
           }
 
           // Проверяем типы аргументов
-          if (!lua_isstring(L, 1) || !lua_isstring(L, 2)) {
-              return luaL_error(L, "Both arguments must be string.");
+          if (!lua_isstring(L, 1) || !lua_isstring(L, 2) || !lua_isstring(L, 3)) {
+              return luaL_error(L, "All arguments must be string.");
           }
 
           const std::string gfsname = static_cast<std::string>(lua_tostring(L, 1));
-          const fs::path filepath = static_cast<std::string>(lua_tostring(L, 2));
+          const std::string relative_path = static_cast<std::string>(lua_tostring(L, 2));
+          const fs::path filepath = static_cast<std::string>(lua_tostring(L, 3));
           fs::path targetdata02 = main_paths::data02_dir_path / gfsname;
-          fs::path from;
           
           targetdata02.replace_extension(".gfs");
             if (fs::is_symlink(targetdata02)) {
                 fs::remove(targetdata02);
-                from = (main_paths::data01_dir_path / gfsname).replace_extension(".gfs");
+                fs::copy_file((main_paths::data01_dir_path / gfsname).replace_extension(".gfs"), targetdata02);
             } 
             else {
-                from = targetdata02;
+                if (!fs::exists(targetdata02)) {
+                    fs::copy_file((main_paths::data01_dir_path / gfsname).replace_extension(".gfs"), targetdata02);
+                }
             }
-              GFS target_gfs(from);
-              GFS AddFiles(filepath);
-              target_gfs.add_files(AddFiles);
-              target_gfs.write_GFS(targetdata02);
+              auto meta_it = std::find_if(
+                  GFS_CHANGES.begin(),
+                  GFS_CHANGES.end(),
+                  [&](const GFSEdit& edit)
+                  { return edit.gfs_path == targetdata02; });
+
+                if (meta_it != GFS_CHANGES.end()) {
+                    meta_it->add_file(filepath, relative_path, 1);
+                }
+                else {
+                    GFSEdit Current(targetdata02);
+                    Current.add_file(filepath, relative_path, 1);
+                    GFS_CHANGES.emplace_back(Current);
+                }
           lua_pushboolean (L, 1); // Возвращаем результат
           return 1; // Количество возвращаемых значенийк
       }
-}
+      int GFS_addfiles(lua_State* L) {
+
+          if (lua_gettop(L) < 3) {
+              return luaL_error(L, "Expected 3 arguments: gfs archive name,relative path and path to files");
+          }
+
+          // Проверяем типы аргументов
+          if (!lua_isstring(L, 1) || !lua_isstring(L, 2) || !lua_isstring(L, 3)) {
+              return luaL_error(L, "All arguments must be string.");
+          }
+
+          const std::string gfsname = static_cast<std::string>(lua_tostring(L, 1));
+          const std::string relative_path = static_cast<std::string>(lua_tostring(L, 2));
+          const fs::path filepath = static_cast<std::string>(lua_tostring(L, 3));
+          fs::path targetdata02 = main_paths::data02_dir_path / gfsname;
+
+          targetdata02.replace_extension(".gfs");
+          if (fs::is_symlink(targetdata02)) {
+              fs::remove(targetdata02);
+              fs::copy_file((main_paths::data01_dir_path / gfsname).replace_extension(".gfs"), targetdata02);
+          }
+          else {
+              if (!fs::exists(targetdata02)) {
+                  fs::copy_file((main_paths::data01_dir_path / gfsname).replace_extension(".gfs"), targetdata02);
+              }
+          }
+          auto meta_it = std::find_if(
+              GFS_CHANGES.begin(),
+              GFS_CHANGES.end(),
+              [&](const GFSEdit& edit)
+              { return edit.gfs_path == targetdata02; });
+
+          if (meta_it != GFS_CHANGES.end()) {
+              meta_it->add_files(filepath, relative_path, 1);
+          }
+          else {
+              GFSEdit Current(targetdata02);
+              Current.add_files(filepath, relative_path, 1);
+              GFS_CHANGES.emplace_back(Current);
+          }
+          lua_pushboolean(L, 1); // Возвращаем результат
+          return 1; // Количество возвращаемых значенийк
+      }
+      int Add_New_Permission(lua_State* L) {
+          if (lua_gettop(L) < 1) {
+              return luaL_error(L, "Expected 1 arguments: New permission");
+          }
+
+          // Проверяем типы аргументов
+          if (!lua_isstring(L, 1)) {
+              return luaL_error(L, "Arguments must be string.");
+          }
+
+          const std::string NewPermission = static_cast<std::string>(lua_tostring(L, 1));
+
+          std::ifstream inFile(main_paths::sal_file_path);
+          if (!inFile) {
+              std::cerr << "Ошибка открытия файла!" << std::endl;
+              return 1;
+          }
+
+          // Читаем все строки в вектор
+          std::vector<std::string> lines;
+          std::string line;
+          while (std::getline(inFile, line)) {
+              lines.push_back(line);
+          }
+          inFile.close();
+
+          // Вставляем новую строку, например, после 2-й строки
+          lines.insert(lines.end() - 1, NewPermission);
+
+          // Перезаписываем файл
+          std::ofstream outFile(main_paths::sal_file_path);
+          for (const auto& l : lines) {
+              outFile << l << "\n";
+          }
+          outFile.close();
+
+          return 0;
+      }
+      int GFS_extract_file(lua_State* L) {
+          if (lua_gettop(L) < 3) {
+              return luaL_error(L, "Expected 3 arguments: gfs archive name, relative path and path to file extract");
+          }
+
+          // Проверяем типы аргументов
+          if (!lua_isstring(L, 1) || !lua_isstring(L, 2) || !lua_isstring(L, 3)) {
+              return luaL_error(L, "All arguments must be string.");
+          }
+          const std::string gfsname = static_cast<std::string>(lua_tostring(L, 1));
+          const std::string relative_path = static_cast<std::string>(lua_tostring(L, 2));
+          const fs::path filepath = static_cast<std::string>(lua_tostring(L, 3));
+          fs::path targetdata02 = main_paths::data02_dir_path / gfsname;
+
+          targetdata02.replace_extension(".gfs");
+          if (fs::is_symlink(targetdata02)) {
+              fs::remove(targetdata02);
+              fs::copy_file((main_paths::data01_dir_path / gfsname).replace_extension(".gfs"), targetdata02);
+          }
+          else {
+              if (!fs::exists(targetdata02)) {
+                  fs::copy_file((main_paths::data01_dir_path / gfsname).replace_extension(".gfs"), targetdata02);
+              }
+          }
+          auto meta_it = std::find_if(
+              GFS_CHANGES.begin(),
+              GFS_CHANGES.end(),
+              [&](const GFSEdit& edit)
+              { return edit.gfs_path == targetdata02; });
+
+          if (meta_it != GFS_CHANGES.end()) {
+              meta_it->extract_file(relative_path, filepath);
+          }
+          else {
+              GFSEdit Current(targetdata02);
+              Current.extract_file(relative_path, filepath);
+              GFS_CHANGES.emplace_back(Current);
+          }
+          lua_pushboolean(L, 1); // Возвращаем результат
+          return 1; // Количество возвращаемых значенийк
+      }
+      int GBS_merge(lua_State* L) {
+          if (lua_gettop(L) < 3) {
+              return luaL_error(L, "Expected 3 arguments: gfs archive name, relative path and path to file extract");
+          }
+
+          // Проверяем типы аргументов
+          if (!lua_isstring(L, 1) || !lua_isstring(L, 2) || !lua_isstring(L, 3)) {
+              return luaL_error(L, "All arguments must be string.");
+          }
+
+          const std::string original = static_cast<std::string>(lua_tostring(L, 1));
+          const std::string mergewith = static_cast<std::string>(lua_tostring(L, 2));
+          const fs::path pathwowrite = static_cast<std::string>(lua_tostring(L, 3));
+
+          gbs::gbs_t Current(original);
+          gbs::gbs_t Second(mergewith);
+          gbs::gbs_t merged_gbs = gbs::merge(Current, Second , gbs::add_new_fonts | gbs::calculate_texture_id | gbs::divide_coords);
+          merged_gbs.write(pathwowrite);
+      }
+
+
 
 void push_vars(lua_State* L, const nsCCLib::luaL_Var* vars) {
     for (; vars->name != NULL; vars++) {
@@ -307,4 +462,5 @@ void push_vars(lua_State* L, const nsCCLib::luaL_Var* vars) {
         }
         lua_setfield(L, -2, vars->name);  // Добавляем в таблицу
     }
+}
 }

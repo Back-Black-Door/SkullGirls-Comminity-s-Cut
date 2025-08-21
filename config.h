@@ -8,7 +8,7 @@ inline const std::string TARGET_EXE_NAME = "ORIGINALSkullGirls.exe";
 inline const std::string OUR_EXE_NAME = "SkullGirls.exe";
 inline const std::string SAVE_FILE_NAME = "saves_CC.json";
 inline const char SAL_FILE_NAME[] = "FULL_SGCC.sal";
-inline const std::string STEAM_NAME = "steam.exe";
+inline const std::string STEAM_NAME = "Steam.exe";
 inline const int SKULLGIRLS_STEAM_ID = 245170;
 
 inline bool DEBUG_ON{ 0 }; // LaunchOptions

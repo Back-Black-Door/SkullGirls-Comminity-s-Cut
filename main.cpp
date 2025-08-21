@@ -2,6 +2,7 @@
 #include "config.h"
 #include "modslualib.h"
 #include "Patching.h"
+#include "gfs.h"
 
 using namespace main_paths;
 
@@ -41,7 +42,7 @@ void ClearScreen(COORD homeCoords)
     SetConsoleCursorPosition(hStdOut, homeCoords);
 }
 
-bool Start_Skullgirls(std::string LaunchName) {
+void Start_process(std::string LaunchName) {
     ZeroMemory(&SGProccesInfo.SGsi, sizeof(SGProccesInfo.SGsi));
     SGProccesInfo.SGsi.cb = sizeof(SGProccesInfo.SGsi);
     ZeroMemory(&SGProccesInfo.SGpi, sizeof(SGProccesInfo.SGpi));
@@ -60,10 +61,8 @@ bool Start_Skullgirls(std::string LaunchName) {
         )
     {
         std::cerr << "Failed to create process: " << GetLastError() << std::endl;
-        return 1;
     }
     std::cout << "We lunched the game!" << std::endl;
-    return 0;
 }
 
 int main(int argc, char* argv[]) {
@@ -90,7 +89,7 @@ int main(int argc, char* argv[]) {
   \____|  \__,_|  \__|                                                                
                               
 )" << std::endl;
-    
+
     std::cout << "Author: ImpDi" << std::endl;
     std::cout << "Version: " << CURRENT_CC_VERSION << std::endl;
     COORD console_home_coord{ 0, 23 };
@@ -99,7 +98,7 @@ int main(int argc, char* argv[]) {
     console_home_coord = { 0,24 };
 #endif // DEBUG
     std::cout << std::endl;
-   
+
     //Install, if our program not named SkullGirls.exe
     exe_path = argv[0];
     if (!((exe_path.filename().string() == OUR_EXE_NAME) or
@@ -110,7 +109,7 @@ int main(int argc, char* argv[]) {
             fs::rename(original_exe_path, original_exe_path.parent_path() / TARGET_EXE_NAME);
         }
 
-        fs::rename(original_exe_path, original_exe_path.parent_path() / OUR_EXE_NAME);
+        fs::rename(exe_path, exe_path.parent_path() / OUR_EXE_NAME);
         WinExec(OUR_EXE_NAME.c_str(), SW_SHOW);
         return 0;
     }
@@ -123,12 +122,11 @@ int main(int argc, char* argv[]) {
                 DEBUG_ON = true;
                 std::cout << "We are gonna debug SG" << std::endl;
             }
-            //if (_tcscmp(argv[count], "-reinstall") == 0) {
-            //    REINSTALL_ALL = true;
-            //    std::cout << "We are reinstall SG_CC" << std::endl;
-            //    break;
-            //}
-              if (_tcscmp(argv[count], "-originalgame") == 0) {
+            if (_tcscmp(argv[count], "-reinstall") == 0) {
+                REINSTALL_ALL = true;
+                std::cout << "We are reinstall SG_CC" << std::endl;
+            }
+            if (_tcscmp(argv[count], "-originalgame") == 0) {
                 LAUNCH_ORIGINAL_GAME = true;
                 std::cout << "We are lauch original SG" << std::endl;
             }
@@ -141,7 +139,9 @@ int main(int argc, char* argv[]) {
 #ifdef NDEBUG
     try
     {
+
         if (!PachingUtils::PidNameTest(PachingUtils::getppid(), STEAM_NAME)) {
+            std::cout << "We are not child of Steam.exe" << '\n';
             system(SteamLunchName.c_str());
             return 0;
         }
@@ -153,21 +153,26 @@ int main(int argc, char* argv[]) {
     }
 #endif
     if (LAUNCH_ORIGINAL_GAME) {
-        Start_Skullgirls(LunchName);
+        Start_process(LunchName);
         return 0;
     }
-    json savedata{NULL};
+    json savedata;
     work_dir_path = exe_path.parent_path();
     data01_dir_path = work_dir_path / "data01";
     data02_dir_path = work_dir_path / "data02";
     mods_dir_path = work_dir_path / "mods";
-   
+    save_file_path = work_dir_path / SAVE_FILE_NAME;
+    sal_file_path = work_dir_path / "Salmon" / "FULL_SGCC.sal";
+
     fs::path requiredDirs[] = {
-        data01_dir_path,
         data02_dir_path,
         mods_dir_path,
     };
-    
+    if (REINSTALL_ALL) {
+        fs::remove_all(data02_dir_path);
+        fs::remove(save_file_path);
+        fs::remove(sal_file_path);
+    }
     try {
         // Проверка необходимых директорий
         for (const auto& dir : requiredDirs) {
@@ -178,9 +183,8 @@ int main(int argc, char* argv[]) {
                 std::cout << "Created directory: " << dir << std::endl;
             }
         }
-        
+
         // Создание файла сохранений, если его нет
-        save_file_path = work_dir_path / SAVE_FILE_NAME;
         if (!fs::exists(save_file_path)) {
             std::ofstream file(save_file_path);
             if (!file) {
@@ -191,10 +195,24 @@ int main(int argc, char* argv[]) {
             std::cout << "Created save file: " << save_file_path << std::endl;
             file.close();
         }
-        
+
         std::ifstream save_file_stream(save_file_path);
         if (!save_file_stream) throw std::runtime_error("Failed to open save file");
         savedata = json::parse(save_file_stream);
+        save_file_stream.close();
+
+        if (!fs::exists(sal_file_path)) {
+            fs::copy(sal_file_path.parent_path() / "FULL_MODE.sal", sal_file_path);
+            std::cout << "Created sal file: " << sal_file_path << std::endl;
+        }
+        main_paths_str::original_exe_path = original_exe_path.string();
+        main_paths_str::exe_path = main_paths::exe_path.string();
+        main_paths_str::work_dir_path = main_paths::work_dir_path.string();
+        main_paths_str::data01_dir_path = main_paths::data01_dir_path.string();
+        main_paths_str::data02_dir_path = main_paths::data02_dir_path.string();
+        main_paths_str::mods_dir_path = main_paths::mods_dir_path.string();
+        main_paths_str::save_file_path = main_paths::save_file_path.string();
+        main_paths_str::sal_file_path = main_paths::sal_file_path.string();
     }
     catch (const fs::filesystem_error& e) {
         std::cerr << "Filesystem error: " << e.what() << std::endl;
@@ -206,6 +224,16 @@ int main(int argc, char* argv[]) {
     system("pause");
 #endif // DEBUG
     ClearScreen(console_home_coord);
+    const nsCCLib::luaL_Var mylib_vars[] = {
+    {"CC_version", nsCCLib::VAR_NUMBER, {.num = CURRENT_CC_VERSION}},
+    {"work_dir", nsCCLib::VAR_STRING, { .str = main_paths_str::work_dir_path.c_str()}},
+    {"data01_dir", nsCCLib::VAR_STRING, {.str = main_paths_str::data01_dir_path.c_str()}},
+    {"data02_dir", nsCCLib::VAR_STRING, {.str = main_paths_str::data02_dir_path.c_str()}},
+    {"savefile_path", nsCCLib::VAR_STRING, {.str = main_paths_str::save_file_path.c_str()}},
+    {"salfile_path", nsCCLib::VAR_STRING, {.str = main_paths_str::sal_file_path.c_str()}},
+    {NULL, nsCCLib::VAR_NIL, {0}}
+    };
+    std::cout << work_dir_path << '\n';
 
     for (const auto& entry : fs::directory_iterator(mods_dir_path)) {
         if (entry.path().extension() != ".lua") continue;
@@ -219,7 +247,7 @@ int main(int argc, char* argv[]) {
 
         try {
             luaL_newlib(L, nsCCLib::ССlib);
-            push_vars(L, nsCCLib::mylib_vars);
+            nsCCLib::push_vars(L, mylib_vars);
             lua_setglobal(L, "CCLib");
 
             if (luaL_loadfile(L, entry.path().string().c_str()) != LUA_OK || lua_pcall(L, 0, 0, 0) != LUA_OK) {
@@ -230,22 +258,25 @@ int main(int argc, char* argv[]) {
             Mod CurrentMod(L);
             std::cout << "[C] Opened mod: " << entry.path() << std::endl;
 
-            auto modData = savedata[CurrentMod.ModInfo.modName];
-
-            if (!modData.is_null()) {
-                if (modData["Version"] < CurrentMod.ModInfo.modVerion) {
+            if (!savedata[CurrentMod.ModInfo.modName].is_null()) {
+                if (savedata[CurrentMod.ModInfo.modName]["Version"] < CurrentMod.ModInfo.modVerion) {
                     CurrentMod.update();
-                    modData["Version"] = CurrentMod.ModInfo.modVerion;
+                    savedata[CurrentMod.ModInfo.modName]["Version"] = CurrentMod.ModInfo.modVerion;
                 }
             }
             else {
                 CurrentMod.install();
-                modData["Version"] = CurrentMod.ModInfo.modVerion;
-                modData["Author"] = CurrentMod.ModInfo.modAuthor;
-                modData["Path"] = CurrentMod.ModInfo.modPath;
+                savedata[CurrentMod.ModInfo.modName]["Version"] = CurrentMod.ModInfo.modVerion;
+                savedata[CurrentMod.ModInfo.modName]["Author"] = CurrentMod.ModInfo.modAuthor;
+                savedata[CurrentMod.ModInfo.modName]["Path"] = CurrentMod.ModInfo.modPath;
             }
+            for (auto& i : GFS_CHANGES) {
+                i.commit_changes();
+            }
+            GFS_CHANGES.clear();
 
             CurrentMod.init();
+
             size_t modIndex = mods.size();
             mods.push_back(CurrentMod);
             auto CheckFunction = [&](const char* funcName, std::vector<size_t>& vec) {
@@ -266,6 +297,7 @@ int main(int argc, char* argv[]) {
             lua_close(L);
         }
     }
+    GFS_CHANGES.clear();
     std::cout << "[C] Done Mod Init & Install & Update" << std::endl;
 
     std::ofstream saveFileWrite(save_file_path);
@@ -280,6 +312,8 @@ int main(int argc, char* argv[]) {
     system("pause");
 #endif // DEBUG
     ClearScreen(console_home_coord);
+
+    std::cout << "Cheking .gfs files, before start a game" << '\n';
 
     try {
         for (const auto& entry : fs::directory_iterator(data01_dir_path)) {
@@ -301,19 +335,24 @@ int main(int argc, char* argv[]) {
         std::cerr << "Error creating symlinks: " << e.what() << std::endl;
         return false;
     }
+    std::cout << "Cheking done!" << '\n';
 
-    Start_Skullgirls(LunchName);
+#ifdef _DEBUG    
+    system("pause");
+#endif // DEBUG
+    ClearScreen(console_home_coord);
+
+    Start_process(LunchName);
 
     SGProccesInfo.dwBaseAddress = PachingUtils::GetModuleBaseAddress(SGProccesInfo.SGpi.dwProcessId);
     std::cout << "Skullgirls_PID: " << std::hex << SGProccesInfo.SGpi.dwProcessId << std::endl;
     std::cout << "Skullgirls_Base_Adress: " << std::hex << SGProccesInfo.dwBaseAddress << std::endl;
 
-
-
     std::function<const bool()> functions[] = {
-        [=]() { return PachingUtils::GFSValidathionBreaker(SGProccesInfo.SGpi.hThread, SGProccesInfo.SGpi.hProcess, SGProccesInfo.dwBaseAddress); },
+        [=]() { return PachingUtils::ChangeDataDirectoryFirstTime(SGProccesInfo.SGpi.hThread, SGProccesInfo.SGpi.hProcess, SGProccesInfo.dwBaseAddress); },
         [=]() { return PachingUtils::SalValidathionBreaker(SGProccesInfo.SGpi.hThread, SGProccesInfo.SGpi.hProcess, SGProccesInfo.dwBaseAddress); },
-        [=]() { return PachingUtils::ChangeDataDirectoryFirstTime(SGProccesInfo.SGpi.hThread, SGProccesInfo.SGpi.hProcess, SGProccesInfo.dwBaseAddress); } };
+        [=]() { return PachingUtils::GFSValidathionBreaker(SGProccesInfo.SGpi.hThread, SGProccesInfo.SGpi.hProcess, SGProccesInfo.dwBaseAddress); },
+        [=]() { return PachingUtils::ChangeSal(SGProccesInfo.SGpi.hThread, SGProccesInfo.SGpi.hProcess, SGProccesInfo.dwBaseAddress); } };
 
     std::vector<std::thread> threads;
 
@@ -338,7 +377,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Done modification SG" << std::endl;
 
-    #ifdef NDEBUG
+#ifdef NDEBUG
     if (loopMods.size() == 0 || deinitMods.size() == 0)
     {
         std::cout << "Goodbye!" << std::endl;
@@ -347,7 +386,7 @@ int main(int argc, char* argv[]) {
     for (auto& mod : mods) {
         lua_close(mod.LuaState);
     }
-    #endif
+#endif
 
 
     //init something, thaw we did'n need to reinit them later
@@ -355,23 +394,28 @@ int main(int argc, char* argv[]) {
     if (DEBUG_ON == 1) {
         DebugActiveProcess(SGProccesInfo.SGpi.dwProcessId);
         DebugSetProcessKillOnExit(false);
-
-        for (Mod i : mods) {
-            std::cout << i.ModInfo.modName << std::endl;
-            std::cout << i.ModInfo.modVerion << std::endl;
-            std::cout << i.ModInfo.modAuthor << std::endl;
-            std::cout << i.ModInfo.modPath << std::endl;
-        }
     }
+        DWORD exitCode = STILL_ACTIVE;
+        while (exitCode == STILL_ACTIVE) {
+            GetExitCodeProcess(SGProccesInfo.SGpi.hProcess, &exitCode);
 
+            for (size_t i : loopMods) {
+                try {
+                    mods[i].loop();
+                }
+                catch (const std::exception& e) {
+                    std::cerr << "[C] Error loading mod: \n" << e.what() << std::endl;
+                    lua_close(mods[i].LuaState);
+                }
+            }
 
-    DWORD exitCode = STILL_ACTIVE;
-    while (exitCode == STILL_ACTIVE) {
-        GetExitCodeProcess(SGProccesInfo.SGpi.hProcess, &exitCode);
+            Sleep(100); // Небольшая пауза, чтобы не нагружать CPU
+        }
 
-        for (size_t i : loopMods) {
+        std::cout << "Skullgirls Wanna Exit" << std::endl;
+        for (size_t i : deinitMods) {
             try {
-                mods[i].loop();
+                mods[i].deinit();
             }
             catch (const std::exception& e) {
                 std::cerr << "[C] Error loading mod: \n" << e.what() << std::endl;
@@ -379,27 +423,13 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        Sleep(100); // Небольшая пауза, чтобы не нагружать CPU
-    }
-
-    std::cout << "Skullgirls Wanna Exit" << std::endl;
-    for (size_t i : deinitMods) {
-        try {
-            mods[i].deinit();
+        for (auto& mod : mods) {
+            lua_close(mod.LuaState);
         }
-        catch (const std::exception& e) {
-            std::cerr << "[C] Error loading mod: \n" << e.what() << std::endl;
-            lua_close(mods[i].LuaState);
-        }
-    }
 
-    for (auto& mod : mods) {
-        lua_close(mod.LuaState);
-    }
-
-    std::cout << "Goodbye!" << std::endl;
+        std::cout << "Goodbye!" << std::endl;
 #ifdef _DEBUG    
-    Sleep(5000);
+        Sleep(5000);
 #endif // DEBUG
-    return 0;
-}
+        return 0;
+    }

@@ -137,6 +137,10 @@ namespace PachingUtils {
         const unsigned char NewString[] = "/data02/";
         unsigned char OldString[sizeof NewString]{ NULL };
 
+        if (ProcessHandle == NULL || ProcessHandle == INVALID_HANDLE_VALUE) {
+            std::cerr << "Invalid process handle\n";
+            return false;
+        }
 
         ReadProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3e922c), &OldString, sizeof(OldString), 0);
         if (OldString == 0) {
@@ -154,15 +158,6 @@ namespace PachingUtils {
         );
 
         WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3e922c), &NewString, sizeof NewString, 0);
-
-        VirtualProtectEx
-        (
-            ProcessHandle,
-            LPVOID(BaseAdress + 0x3e9000),
-            0x4B000,
-            PAGE_READONLY,
-            &old
-        );
 
         std::cout << "Change Data Directory First Time\n" ;
         return true;
@@ -202,41 +197,6 @@ namespace PachingUtils {
         return true;
     }
 
-    const bool ChangeSal(const HANDLE& ThreadHande, const HANDLE& ProcessHandle, const DWORD BaseAdress) {
-        char OldString[sizeof(SAL_FILE_NAME)]{NULL};
-
-
-        ReadProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3dbc7c), &OldString, sizeof(OldString), 0);
-        if (OldString == 0) {
-            return false;
-        }
-
-        DWORD old;
-        VirtualProtectEx
-        (
-            ProcessHandle,
-            LPVOID(BaseAdress + 0x3db000),		// адрес региона для установки флага
-            0xE678,		// размер региона
-            PAGE_EXECUTE_READWRITE,	// флаг
-            &old	// адрес для сохранения старых флагов
-        );
-
-        WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3dbc7c), &SAL_FILE_NAME, sizeof SAL_FILE_NAME, 0);
-
-        VirtualProtectEx
-        (
-            ProcessHandle,
-            LPVOID(BaseAdress + 0x3db000),		// адрес региона для установки флага
-            0xE678,		// размер региона
-            PAGE_READONLY,	// флаг
-            &old	// адрес для сохранения старых флагов
-        );
-
-        std::cout << "Change .sal File Name\n";
-        return true;
-    }
-
-
     const void Debugger(DEBUG_EVENT& DebugEv, const HANDLE& ThreadHande, const HANDLE& ProcessHandle) {
         WaitForDebugEvent(&DebugEv, INFINITE);
         switch (DebugEv.dwDebugEventCode) {
@@ -253,7 +213,40 @@ namespace PachingUtils {
         }
         ContinueDebugEvent(DebugEv.dwProcessId, DebugEv.dwThreadId, DBG_CONTINUE);
     }
+    
+    const bool ChangeSal(const HANDLE& ThreadHande, const HANDLE& ProcessHandle, const DWORD BaseAdress) {
+        char OldString[sizeof(SAL_FILE_NAME)]{ NULL };
 
+
+        ReadProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3dbc7c), &OldString, sizeof(OldString), 0);
+        if (OldString == 0) {
+            return false;
+        }
+
+        DWORD old;
+        VirtualProtectEx
+        (
+            ProcessHandle,
+            LPVOID(BaseAdress + 0x3db000),		
+            0xE678,		
+            PAGE_EXECUTE_READWRITE,
+            &old	
+        );
+
+        WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3dbc7c), &SAL_FILE_NAME, sizeof SAL_FILE_NAME, 0);
+
+        VirtualProtectEx
+        (
+            ProcessHandle,
+            LPVOID(BaseAdress + 0x3db000),		
+            0xE678,		
+            PAGE_READONLY,	
+            &old
+        );
+
+        std::cout << "Change .sal File Name\n";
+        return true;
+    }
     //void RussianLanguage(HANDLE& ThreadHande, HANDLE& ProcessHandle, DWORD BaseAdress, bool& data) {
     //    if (data == 0) return;
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "include.h"
 #include "main.h"
+#include "config.h"
 
 class Mod {
 	public:
@@ -25,16 +26,17 @@ class Mod {
 inline std::vector<Mod> mods;
 inline std::vector<size_t> launchMods, loopMods, deinitMods;
 
-typedef enum {
-	VAR_NUMBER,
-	VAR_INTEGER,
-	VAR_STRING,
-	VAR_BOOLEAN,
-	VAR_NIL,
-	VAR_LIGHTUSERDATA
-} VarType;
-
 namespace nsCCLib {
+
+	typedef enum {
+		VAR_NUMBER,
+		VAR_INTEGER,
+		VAR_STRING,
+		VAR_BOOLEAN,
+		VAR_NIL,
+		VAR_LIGHTUSERDATA
+	} VarType;
+
 	typedef struct {
 		const char* name;  // Имя переменной
 		VarType type;      // Тип (из enum)
@@ -47,8 +49,6 @@ namespace nsCCLib {
 		} value;
 	} luaL_Var;
 
-	extern const luaL_Var mylib_vars[];
-
 	int test(lua_State* L);
 	int GetGameBaseAdress(lua_State* L);
 	int ReadAddressStr(lua_State* L);
@@ -56,13 +56,12 @@ namespace nsCCLib {
 	int WriteAddressStr(lua_State* L);
 	int WriteAddressNum(lua_State* L);
 	int GetWorkingDirectory(lua_State* L);
+	int GFS_addfile(lua_State* L);
 	int GFS_addfiles(lua_State* L);
+	int GFS_extract_file(lua_State* L);
+	int Add_New_Permission(lua_State* L);
+	int GBS_merge(lua_State* L);
 	extern const luaL_Reg ССlib[];
-
-	inline const luaL_Var mylib_vars[] = {
-		//{"test", VAR_STRING, {.str = "Test"}},
-		{NULL, VAR_NIL, {0}}
-	};
 
 	inline const luaL_Reg ССlib[] = {
 	 // {"test", test}, // Функция `test` в Lua будет вызывать `test` из C++
@@ -72,10 +71,14 @@ namespace nsCCLib {
 	  {"WriteAddressStr", WriteAddressStr},
 	  {"WriteAddressNum", WriteAddressNum},
 	  {"GetWorkingDirectory", GetWorkingDirectory},
+	  {"gfs_addfile", GFS_addfile},
 	  {"gfs_addfiles", GFS_addfiles},
+	  {"add_new_permission", Add_New_Permission},
+	  {"gfs_extract_file", GFS_extract_file},
+	  {"gbs_merge", GBS_merge},
 	  {nullptr, nullptr} // Маркер конца
 	};
 
-}
 
 void push_vars(lua_State* L, const nsCCLib::luaL_Var* vars);
+}

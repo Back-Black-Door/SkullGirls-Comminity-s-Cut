@@ -1,5 +1,5 @@
-﻿# Patching
-## Patching
+﻿## Patching
+
 ### GetGameBaseAdress() 
 The returned number is Game Base Adress
 
@@ -70,24 +70,20 @@ launch = function ()
 Output: "123"
 ```
 
-# Filesystem
 ## Filesystem
 
-### GetWorkingDirectory()
-Return string with full path to SkullGirls Directory (...\steamapps\common\Skullgirls)
+### Constant:
 
-Exemple:
 ```
-launch = function ()  
-    local i = CCLib.GetWorkingDirectory()
-    print("[Lua] My Working Directory: ")
-    print(i)
-    end;
-
-Output: "123"
+CCLib.CC_version --Curent CC Version(Number)
+CCLib.work_dir   --full path (String) to SkullGirls Directory (...\steamapps\common\Skullgirls) 
+CCLib.data01_dir --full path (String) to SkullGirls data01 (...\steamapps\common\Skullgirls\data01) 
+CCLib.data02_dir --full path (String) to SkullGirls data02 (...\steamapps\common\Skullgirls\data02) 
+CCLib.savefile_path --full path (String) to CC savefile (...\steamapps\common\Skullgirls\saves_CC.json) 
+CCLib.salfile_path --full path (String) to CC sal file (...\steamapps\common\Skullgirls\Salmon\FULL_SGCC.sal) 
 ```
 
-### gfs_addfiles("gfsarhivename", path to folder with files)
+### gfs_addfiles("gfsarhivename",relative path, path to files)
 Add Files to gfs archive in data02 (Create copy from data01, if doesn't exist, and than add)
 
 Return True, if success
@@ -99,8 +95,55 @@ init = function ()
     i = i .. "\\mods\\test\\core"
     print("[Lua] My Files Directory: ")
     print(i)
-    CCLib.gfs_addfiles("core", i)
+    CCLib.gfs_addfiles("core","", i)
     end;
-
-Output: "123"
 ```
+
+### gfs_addfile("gfsarhivename", relative path, path to file)
+Add Files to gfs archive in data02 (Create copy from data01, if doesn't exist, and than add)
+
+Return True, if success
+
+Exemple:
+```
+init = function ()  
+    local i = CCLib.GetWorkingDirectory()
+    i = i .. "\\mods\\test\\core"
+    print("[Lua] My Files Directory: ")
+    print(i)
+    CCLib.gfs_addfile("core","", i)
+    end;
+```
+
+### gfs_extract_file("gfsarhivename", relative path, path to file)
+
+Extrart File from gfs archive to "path to file" (Create copy from data01, if doesn't exist, and than add)
+
+Return True, if success
+
+Exemple:
+```
+init = function ()  
+    local i = CCLib.GetWorkingDirectory()
+    i = i .. "\\mods\\test\\stages.ini"
+    CCLib.gfs_extract_file("core", "core/stages.ini", i)
+    end;
+```
+
+### gbs_merge(original gbs, gbs with which merge, path to write)
+
+Merge two gbs, using original *.gbs like a base. Adding fonts and textures.
+
+Return True, if success
+
+Exemple:
+```
+init = function ()  
+    local i = CCLib.GetWorkingDirectory()
+    local Charselect_gbs = i .. "\\mods\\test\\Charselect.gbs"
+    local Charselect_gbs_merge_with = i .. "\\mods\\test\\Charselect_merge.gbs"
+    local Charselect_gbs_path_to_write = i .. "\\mods\\test\\ui-win\\ui\\Win\\Charselect.gbs"
+    CCLib.gbs_merge(Charselect_gbs, Charselect_gbs_merge_with, Charselect_gbs_path_to_write)
+    end;
+```
+
