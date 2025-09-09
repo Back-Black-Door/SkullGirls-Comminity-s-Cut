@@ -3,7 +3,7 @@
 /.vs
 /crash-dumps
 .vcxproj
-*vcxproj.filters
+*.vcxproj.filters
 *.vcxproj.user
 *.vcxproj.user
 *.slnLaunch.user
