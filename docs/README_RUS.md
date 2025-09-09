@@ -23,4 +23,6 @@ C:\Program Files (x86)\Steam\steamapps\common\Skullgirls\CoreMessaging.dll
 
 Для большей информации, присоединяйтесь к нашему Дискорду! [Discord](https://discord.gg/4ufGJQjkpc)
 
-Может вы хотите спросить _ImpDi_ о чём-то? :^) (Вы можете даже задать вопрос на русском!)
+Может вы хотите спросить _ImpDi_ о чём-то? :^) 
+
+(Вы можете даже задать вопрос на русском!)
