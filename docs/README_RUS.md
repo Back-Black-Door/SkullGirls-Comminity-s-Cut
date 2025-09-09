@@ -1,8 +1,8 @@
 ﻿# README
 
-### How To Install:
-
 [English Version](../README.md)
+
+### How To Install:
 
 1. Скопируйте файл в свою папку с игрой. Должно получиться, что-то вроде: 
 C:\Program Files (x86)\Steam\steamapps\common\Skullgirls\CoreMessaging.dll
@@ -13,11 +13,12 @@ C:\Program Files (x86)\Steam\steamapps\common\Skullgirls\CoreMessaging.dll
 Это только **Мод-Лоудер!**
 
 Для игроков:
-Моды достпны [на главной странице](https://github.com/Back-Black-Door)
+Моды доступны [на главной странице](https://github.com/Back-Black-Door)
 
 Для разработчиков модов:
 Документация на английском: [CClib.md](CClib.md)
-Документация на русском: [CClib.md](CClib_RUS.md)
+
+Документация на русском: [CClib.md](CCLib_RUS.md)
 
 Для большей информации, присоединяйтесь к нашему Дискорду! [Discord](https://discord.gg/4ufGJQjkpc)
 
