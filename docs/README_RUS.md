@@ -12,13 +12,14 @@ C:\Program Files (x86)\Steam\steamapps\common\Skullgirls\CoreMessaging.dll
 Вы также, наверное хотите скачать или создать свои моды.
 Это только **Мод-Лоудер!**
 
-Для игроков:
+### Для игроков:
 Моды доступны [на главной странице](https://github.com/Back-Black-Door)
 
-Для разработчиков модов:
+### Для разработчиков модов:
+
 Документация на английском: [CClib.md](CClib.md)
 
-Документация на русском: [CClib.md](CCLib_RUS.md)
+Документация на русском: [CClib.md](CCLib_RU.md)
 
 Для большей информации, присоединяйтесь к нашему Дискорду! [Discord](https://discord.gg/4ufGJQjkpc)
 
