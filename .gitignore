@@ -1,0 +1,12 @@
+/Debug
+/Release
+/SkullGir.529f383a
+/.vs
+/crash-dumps
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.vcxproj.user
+*.slnLaunch.user
+todo.md
+lualibideas.md
