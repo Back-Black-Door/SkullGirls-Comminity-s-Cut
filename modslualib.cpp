@@ -518,6 +518,22 @@ namespace CCLib {
           return 1; 
       }
 
+      int getModVersion(lua_State* L) {
+          if (!lua_isstring(L, 1)) {
+              return luaL_error(L, "Argument must be string.");
+          }
+          const std::string ModName = static_cast<std::string>(lua_tostring(L, 1));
+          int version = 0;
+          for (const auto& mod : mods) {
+              if (mod->ModInfo.modName == ModName) {
+                  version = mod->ModInfo.modVersion;
+                  break;
+              }
+          }
+          lua_pushnumber(L, version);
+          return 1;
+      }
+
 
       void push_vars(lua_State* L, const CCLib::luaL_Var* vars) {
     for (; vars->name != NULL; vars++) {

@@ -3,7 +3,7 @@
 CCLib provides a set of functions for working with game memory and the file system in Skullgirls. All functions are available through the CCLib table.
 
 ## Memory Operations
-### GetGameBaseAddress()
+### getGameBaseAddress()
 Returns the game's base memory address.
 
 Return value: `number` (base address)
@@ -12,14 +12,14 @@ Example:
 
 ```lua
 launch = function()
-    local baseAddress = CCLib.GetGameBaseAddress()
+    local baseAddress = CCLib.getGameBaseAddress()
     print("[Lua] GameBaseAddress: " .. baseAddress)
 end
 
 -- Output: 10747904
 ```
 
-### ReadAddressStr(address, size)
+### readAddressString(address, size)
 Reads a string from the game's memory at the specified address.
 
 Parameters:
@@ -34,14 +34,14 @@ Example:
 
 ```lua
 launch = function()
-    local value = CCLib.ReadAddressStr(0x00841984, 7)
+    local value = CCLib.readAddressString(0x00841984, 7)
     print("[Lua] Value at 0x00841984: " .. value)
 end
 
 -- Output: "example"
 ```
 
-### ReadAddressNum(address)
+### readAddressNumber(address)
 Reads a numeric value from the game's memory at the specified address.
 
 Parameters:
@@ -54,14 +54,14 @@ Example:
 
 ```lua
 launch = function()
-    local value = CCLib.ReadAddressNum(0x00841984)
+    local value = CCLib.readAddressNumber(0x00841984)
     print("[Lua] Value at 0x00841984: " .. value)
 end
 
 -- Output: 0
 ```
 
-### WriteAddressStr(address, message)
+### writeAddressString(address, message)
 Writes a string to the game's memory at the specified address.
 
 Parameters:
@@ -76,10 +76,10 @@ Example:
 ```lua
 launch = function()
     local str = "SkullGirls_CC_Is_Good!"
-    local success = CCLib.WriteAddressStr(0x00841984, str)
+    local success = CCLib.writeAddressString(0x00841984, str)
     
     if success then
-        local readValue = CCLib.ReadAddressStr(0x00841984, #str)
+        local readValue = CCLib.readAddressString(0x00841984, #str)
         print("[Lua] Written value: " .. readValue)
     end
 end
@@ -87,7 +87,7 @@ end
 -- Output: "SkullGirls_CC_Is_Good"
 ```
 
-### WriteAddressNum(address, num)
+### writeAddressNumber(address, num)
 Writes a number to the game's memory at the specified address.
 
 Parameters:
@@ -102,10 +102,10 @@ Example:
 
 ```lua
 launch = function()
-    local success = CCLib.WriteAddressNum(0x00841984, 123)
+    local success = CCLib.writeAddressNumber(0x00841984, 123)
     
     if success then
-        local readValue = CCLib.ReadAddressNum(0x00841984)
+        local readValue = CCLib.readAddressNumber(0x00841984)
         print("[Lua] Written value: " .. readValue)
     end
 end
@@ -125,7 +125,7 @@ CCLib.data02_dir       -- Full path to data02
 CCLib.savefile_path    -- Full path to CC save file
 CCLib.salfile_path     -- Full path to CC sal file (FULL_SGCC.sal)
 ```
-### gfs_addfiles(gfs_archive_name, relative_path, files_path)
+### gfsAddFile(gfs_archive_name, relative_path, files_path)
 Adds files to a GFS archive in data02 (creates a copy from data01 if it doesn't exist).
 
 Parameters:
@@ -142,12 +142,12 @@ Example:
 ```lua
 init = function()
     local modPath = CCLib.work_dir .. "\\mods\\test\\core"
-    local success = CCLib.gfs_addfiles("core", "", modPath)
+    local success = CCLib.gfsAddFile("core", "", modPath)
     print("[Lua] Files added: " .. tostring(success))
 end
 ```
 
-### gfs_addfile(gfs_archive_name, relative_path, file_path)
+### gfsAddFiles(gfs_archive_name, relative_path, file_path)
 Adds a single file to a GFS archive in data02.
 
 Parameters:
@@ -165,12 +165,12 @@ Example:
 ```lua
 init = function()
     local filePath = CCLib.work_dir .. "\\mods\\test\\core\\file.txt"
-    local success = CCLib.gfs_addfile("core", "file.txt", filePath)
+    local success = CCLib.gfsAddFiles("core", "file.txt", filePath)
     print("[Lua] File added: " .. tostring(success))
 end
 ```
 
-### gfs_extract_file(gfs_archive_name, relative_path, extract_path)
+### gfsExtractFile(gfs_archive_name, relative_path, extract_path)
 Extracts a file from a GFS archive.
 
 Parameters:
@@ -188,12 +188,12 @@ Example:
 ```lua
 init = function()
     local extractPath = CCLib.work_dir .. "\\mods\\test\\stages.ini"
-    local success = CCLib.gfs_extract_file("core", "core/stages.ini", extractPath)
+    local success = CCLib.gfsExtractFile("core", "core/stages.ini", extractPath)
     print("[Lua] File extracted: " .. tostring(success))
 end
 ```
 
-### gbs_merge(original_gbs, merge_gbs, output_path)
+### gbsMerge(original_gbs, merge_gbs, output_path)
 Merges two GBS files, using the original file as a base.
 
 Parameters:
@@ -214,10 +214,67 @@ init = function()
     local mergeWith = CCLib.work_dir .. "\\mods\\test\\Charselect_merge.gbs"
     local output = CCLib.work_dir .. "\\mods\\test\\ui-win\\ui\\Win\\Charselect.gbs"
     
-    local success = CCLib.gbs_merge(original, mergeWith, output)
+    local success = CCLib.gbsMerge(original, mergeWith, output)
     print("[Lua] GBS merged: " .. tostring(success))
 end
 ```
+## Mods Interaction
+I would ask you to make mods more independent and self-contained. 
+If you really need another mod, use `required` - 
+if such a mod is not in the folder with yours, 
+we will get an error that will tell us about the need to download another mod.
+
+### hasMod(ModName)
+
+Checks if we have the required mod (Doesn't raise an error! Be careful)
+
+Parameters:
+
+ - string `ModName` - The name of the mod we are asking about
+
+Return value: `boolean` (true if we have)
+
+Example:
+
+```lua
+
+launch = function()
+    local ExempleMod = CCLib.hasMod("ExempleMod")
+    if ExempleMod then
+        print("Yes, we have!")
+    else
+        print("No, we haven't!")
+    end
+end;
+```
+
+### getModVersion(ModName)
+
+Returns the version number of the mod.
+If there is no such mod, returns 0
+
+Parameters:
+
+ - string `ModName` - The name of the mod we are asking about
+
+Return value: `number` (0 if we haven't)
+
+Example:
+
+```lua
+
+launch = function()
+        local ExempleMod = CCLib.getModVersion("ExempleMod")
+        if ExempleMod==0 then
+            print("We haven't ExempleMod!")
+        elseif ExempleMod==1 then
+            print("ExempleMod version is 1!")
+        elseif ExempleMod==2 then
+            print("ExempleMod version is 2!")
+        end
+end;
+```
+
 ## Exemple of Mod, than add new stage
 
 ```lua

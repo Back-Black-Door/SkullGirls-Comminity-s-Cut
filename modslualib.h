@@ -80,21 +80,23 @@ namespace CCLib {
     int GBS_merge(lua_State* L);
     int allocate_executable_memory(lua_State* L);
     int has_mod(lua_State* L);
+    int getModVersion(lua_State* L);
 
     inline const luaL_Reg CClib_func[] = {
-     {"GetGameBaseAdress", GetGameBaseAdress},
-     {"ReadAddressStr", ReadAddressStr},
-     {"ReadAddressNum", ReadAddressNum},
-     {"WriteAddressStr", WriteAddressStr},
-     {"WriteAddressNum", WriteAddressNum},
-     {"GetWorkingDirectory", GetWorkingDirectory},
-     {"gfs_addfile", GFS_addfile},
-     {"gfs_addfiles", GFS_addfiles},
-     {"add_new_permission", Add_New_Permission},
-     {"gfs_extract_file", GFS_extract_file},
-     {"gbs_merge", GBS_merge},
-     {"allocate_executable_memory", allocate_executable_memory},
-     {"has_mod", has_mod},
+     {"getGameBaseAddress", GetGameBaseAdress},
+     {"readAddressString", ReadAddressStr},
+     {"readAddressNumber", ReadAddressNum},
+     {"writeAddressString", WriteAddressStr},
+     {"writeAddressNumber", WriteAddressNum},
+     {"getWorkingDirectory", GetWorkingDirectory},
+     {"gfsAddFile", GFS_addfile},
+     {"gfsAddFiles", GFS_addfiles},
+     {"addNewPermission", Add_New_Permission},
+     {"gfsExtractFile", GFS_extract_file},
+     {"gbsMerge", GBS_merge},
+     {"allocateExecutableMemory", allocate_executable_memory},
+     {"hasMod", has_mod},
+     {"getModVersion", getModVersion},
      {nullptr, nullptr} // Маркер конца
     };
     void push_vars(lua_State* L, const luaL_Var* vars);
