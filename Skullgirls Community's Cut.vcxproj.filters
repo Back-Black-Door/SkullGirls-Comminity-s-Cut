@@ -1,0 +1,134 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="process">
+      <UniqueIdentifier>{6f4d0688-9dfa-49d5-9ad5-11eb59a0f7f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="threads">
+      <UniqueIdentifier>{610e0f16-7c04-424e-a523-eabb7d24e96b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="formats">
+      <UniqueIdentifier>{63ea6bae-afca-49ea-b172-4a5a944823b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dll_proxy">
+      <UniqueIdentifier>{11631dff-fbfa-4a69-b547-be42482a96ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{6491050f-39c2-4c8f-b6ed-ca610e8df32c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TextFiles">
+      <UniqueIdentifier>{2b1e4ac4-12c6-452f-b0c7-57043c7070ec}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Console.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modslualib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="thread\Thread.cpp">
+      <Filter>threads</Filter>
+    </ClCompile>
+    <ClCompile Include="thread\ThreadWork.cpp">
+      <Filter>threads</Filter>
+    </ClCompile>
+    <ClCompile Include="process\process.cpp">
+      <Filter>process</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\Reader_Writer.cpp">
+      <Filter>process</Filter>
+    </ClCompile>
+    <ClCompile Include="process\Patching.cpp">
+      <Filter>process</Filter>
+    </ClCompile>
+    <ClCompile Include="dll_proxy\dll_proxy.cpp">
+      <Filter>dll_proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\gbs.cpp">
+      <Filter>formats</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\gfs.cpp">
+      <Filter>formats</Filter>
+    </ClCompile>
+    <ClCompile Include="dll_proxy\Hook.cpp">
+      <Filter>dll_proxy</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="dll_proxy\dll_proxy.def">
+      <Filter>dll_proxy</Filter>
+    </None>
+    <None Include="todo.md">
+      <Filter>TextFiles</Filter>
+    </None>
+    <None Include=".gitignore">
+      <Filter>TextFiles</Filter>
+    </None>
+    <None Include="docs\CClib.md">
+      <Filter>TextFiles</Filter>
+    </None>
+    <None Include="docs\CCLib_RU.md">
+      <Filter>TextFiles</Filter>
+    </None>
+    <None Include="README.md">
+      <Filter>TextFiles</Filter>
+    </None>
+    <None Include="docs\README_RUS.md">
+      <Filter>TextFiles</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Console.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dllmain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="modslualib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="thread\Thread.h">
+      <Filter>threads</Filter>
+    </ClInclude>
+    <ClInclude Include="thread\ScopedLock.h">
+      <Filter>threads</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\Reader_Writer.h">
+      <Filter>formats</Filter>
+    </ClInclude>
+    <ClInclude Include="dll_proxy\dll_proxy.h">
+      <Filter>dll_proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="process\process.h">
+      <Filter>process</Filter>
+    </ClInclude>
+    <ClInclude Include="dll_proxy\Hook.h">
+      <Filter>dll_proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\gfs.h">
+      <Filter>formats</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\gbs.h">
+      <Filter>formats</Filter>
+    </ClInclude>
+    <ClInclude Include="process\Patching.h">
+      <Filter>process</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
