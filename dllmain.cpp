@@ -70,9 +70,9 @@ bool HandleProcessAttach(HMODULE hModule) {
         Console::CleanupConsole();
         return TRUE;
     }
-    if (!GetCurrentProcessInfo()) {
-        OutputDebugString("We can't get current process info!");
-    };
+    std::cout << "Test";
+
+    std::cout << "Test2";
     json savedata;
     if (!InitializePaths(savedata)) {
         OutputDebugString("We can't init path!");
@@ -119,10 +119,10 @@ bool ReadMainArgs() {
     LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
     if (argv == NULL) {
         Console::DLL_DebugWriteOutput("CommandLineToArgvW failed!\n",FOREGROUND_RED);
-        return FALSE; // или соответствующая обработка ошибки
+        return FALSE; 
     }
 
-    // Преобразование из wide char (wchar_t) в multi-byte char
+    // From wide char (wchar_t) into multi-byte char
     int bufferSize = WideCharToMultiByte(CP_UTF8, 0, argv[0], -1, NULL, 0, NULL, NULL);
     if (bufferSize > 0) {
         std::vector<char> buffer(bufferSize);
@@ -175,14 +175,14 @@ bool InitializePaths(json& savedata)
 
 void CreateRequiredDirectoriesAndFiles(json& savedata)
 {
-        // Создание директорий
+        // Create directory
         for (const auto& dir : { main_paths::data02_dir_path, main_paths::mods_dir_path }) {
             if (!fs::exists(dir) && !fs::create_directory(dir)) {
                 throw std::runtime_error("Failed to create directory: " + dir);
             }
         }
 
-        // Создание файла сохранений
+        // Create save file
         if (!fs::exists(main_paths::save_file_path)) {
             std::ofstream file(main_paths::save_file_path);
             if (!file) throw std::runtime_error("Failed to create save file");
@@ -190,12 +190,12 @@ void CreateRequiredDirectoriesAndFiles(json& savedata)
             file.close();
         }
 
-        // Загрузка данных сохранений
+        // Loading save file
         std::ifstream save_file_stream(main_paths::save_file_path);
         savedata = json::parse(save_file_stream);
         save_file_stream.close();
 
-        // Копирование SAL файла
+        // Copy .sal file
         if (!fs::exists(main_paths::sal_file_path)) {
             fs::copy(main_paths::work_dir_path + "\\Salmon\\FULL_MODE.sal",
                 main_paths::sal_file_path);
@@ -204,7 +204,7 @@ void CreateRequiredDirectoriesAndFiles(json& savedata)
 
 bool InitializeMods(json& savedata)
 {
-    // Считаем количество .lua файлов
+    // Counting .lua files
     try
         {
         size_t count = 0;
@@ -212,7 +212,7 @@ bool InitializeMods(json& savedata)
             if (entry.path().extension() == ".lua") count++;
         }
 
-        // Резервируем память заранее
+        // Reserve memory for mods
         mods.reserve(mods.size() + count);
 
         for (const auto& entry : fs::directory_iterator(main_paths::mods_dir_path)) {
@@ -233,11 +233,11 @@ bool InitializeMods(json& savedata)
     return true;
 }
 
-// Обработка отдельного файла мода
+// Process Mod File
 void ProcessModFile(const fs::directory_entry& entry, json& savedata)
 {
     try {
-        // Создаем мод с собственным Lua состоянием
+        // Create Mod object
         mods.emplace_back(std::make_unique<Mod>(entry.path().string()));
     }
     catch (const std::exception& e) {
@@ -246,7 +246,7 @@ void ProcessModFile(const fs::directory_entry& entry, json& savedata)
     }
 }
 
-// Управление жизненным циклом мода
+// Control Mod Version
 void ManageModLifecycle(Mod& mod, json& savedata)
 {
     if (savedata[mod.ModInfo.modName].is_null()) {
@@ -306,7 +306,7 @@ void SaveModData(const json& savedata)
 {
     try {
         std::ofstream saveFileWrite(main_paths::save_file_path);
-        saveFileWrite << savedata.dump(4); // Форматированный вывод для читаемости
+        saveFileWrite << savedata.dump(4); //Dump Mod Info
         saveFileWrite.close();
         Console::DLL_WriteOutput("[C] Rewrite \"saves_CC.json\"\n");
     }

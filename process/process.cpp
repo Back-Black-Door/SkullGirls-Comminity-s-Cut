@@ -29,7 +29,7 @@ bool GetCurrentProcessInfo()
     }
 
     SGProccesInfo.SGpi.hProcess = hRealHandleProcess;
-    SGProccesInfo.SGpi.hThread = hRealHandleThread; // ← Теперь это настоящий handle потока
+    SGProccesInfo.SGpi.hThread = hRealHandleThread; // Теперь это настоящий handle потока
     SGProccesInfo.SGpi.dwProcessId = GetCurrentProcessId();
     SGProccesInfo.SGpi.dwThreadId = GetCurrentThreadId();
     SGProccesInfo.dwBaseAddress = GetModuleBaseAddress();

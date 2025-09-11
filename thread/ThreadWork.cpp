@@ -12,6 +12,9 @@ bool ExecuteModDeinit();
 DWORD IsolatedThread::Run() {
     Console::DLL_DebugWriteOutput("IsolatedThread started\n");
     
+    while (!GetCurrentProcessInfo());
+    Console::DLL_WriteOutput("Read process info!");
+
     while (!ApplyGamePatches());
     Console::DLL_WriteOutput("Apply games patch!");
 

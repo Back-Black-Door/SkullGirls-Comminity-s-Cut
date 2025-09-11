@@ -8,7 +8,7 @@
 
 static HANDLE hNullInput = INVALID_HANDLE_VALUE;
 static bool console_allocated = false;
-static CriticalSection g_consoleCs;  // Используем наш класс вместо CRITICAL_SECTION
+static CriticalSection g_consoleCs;  // Using our class instead of Windows's
 
 namespace Console {
     bool InitializeConsole()
@@ -25,7 +25,7 @@ namespace Console {
             mode |= ENABLE_EXTENDED_FLAGS | ENABLE_PROCESSED_INPUT;
             SetConsoleMode(hInput, mode);
         }
-        // Перенаправляем стандартные потоки
+        // Redirect streams
         FILE* fDummy;
         freopen_s(&fDummy, "CONIN$", "r", stdin);
         freopen_s(&fDummy, "CONOUT$", "w", stdout);
@@ -33,7 +33,7 @@ namespace Console {
 
         HWND hwnd = GetConsoleWindow();
         if (hwnd) {
-            // Убираем возможность выделения
+            // Delete mouse interaction in console
             LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
             style &= ~(WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
             SetWindowLongPtr(hwnd, GWL_STYLE, style);
@@ -49,7 +49,7 @@ namespace Console {
     {
         if (!console_allocated) return;
 
-        ScopedLock lock(g_consoleCs);  // Используем обёртку
+        ScopedLock lock(g_consoleCs);  // Using RAII
 
         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
         if (hConsole == INVALID_HANDLE_VALUE || hConsole == NULL)
@@ -72,8 +72,6 @@ namespace Console {
         SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     }
 
-    // Остальные функции остаются без изменений, но используют g_consoleCs через ScopedLock
-    // ...
     void DLL_WriteOutput(const char* format, int colorargs, ...)
     {
         va_list args;
@@ -97,7 +95,7 @@ namespace Console {
         {
             if (!console_allocated) return;
 
-            ScopedLock lock(g_consoleCs);  // Используем обёртку
+            ScopedLock lock(g_consoleCs);  // Using RAII
 
             HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
             if (hConsole == INVALID_HANDLE_VALUE || hConsole == NULL)
@@ -137,8 +135,7 @@ namespace Console {
                 FreeConsole();
                 console_allocated = false;
             }
-
-            // Критическая секция автоматически очистится при разрушении g_consoleCs
+            //Critical Section automatically clears after g_consoleCs
         }
     }
 }

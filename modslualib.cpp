@@ -10,8 +10,8 @@
 #include "thread/ScopedLock.h"
 #include "process/process.h"
 
-static CriticalSection g_luaCs;  // Используем наш класс вместо CRITICAL_SECTION
-std::vector<std::unique_ptr<Mod>> mods; // Реальная реализация
+static CriticalSection g_luaCs;  // Using our class instead of Windows's
+std::vector<std::unique_ptr<Mod>> mods; //Mods vector
 
 
 Mod::Mod(const std::string& modPath) : LuaState(nullptr), luaRefMod(LUA_NOREF) {
@@ -43,7 +43,7 @@ Mod::Mod(const std::string& modPath) : LuaState(nullptr), luaRefMod(LUA_NOREF) {
             throw std::runtime_error("Lua error: " + error);
         }
 
-        ScopedLock lock(g_luaCs);  // Используем обёртку
+        ScopedLock lock(g_luaCs);  //Using RAII
         lua_getglobal(LuaState, "ModInfo");
         if (lua_istable(LuaState, -1)) {
             lua_getfield(LuaState, -1, "ModName");
@@ -94,7 +94,7 @@ Mod::Mod(const std::string& modPath) : LuaState(nullptr), luaRefMod(LUA_NOREF) {
 }
 
 Mod::~Mod() {
-    ScopedLock lock(g_luaCs);  // Используем обёртку
+    ScopedLock lock(g_luaCs);  //Using RAII
     if (LuaState) {
         if (luaRefMod != LUA_NOREF) {
             luaL_unref(LuaState, LUA_REGISTRYINDEX, luaRefMod);
@@ -105,7 +105,7 @@ Mod::~Mod() {
 }
 
 bool Mod::callLuaFunction(const std::string& functionName) {
-    ScopedLock lock(g_luaCs);  // Используем обёртку
+    ScopedLock lock(g_luaCs);  //Using RAII
     if (!LuaState || luaRefMod == LUA_NOREF) return false;
 
     int top = lua_gettop(LuaState);
@@ -145,8 +145,8 @@ void Mod::deinit() { callLuaFunction("deinit"); }
 namespace CCLib {
       int GetGameBaseAdress(lua_State* L) {
           int result = SGProccesInfo.dwBaseAddress;
-          lua_pushnumber(L, result); // Возвращаем результат
-          return 1; // Количество возвращаемых значенийк
+          lua_pushnumber(L, result); 
+          return 1; 
       }
       int ReadAddressNum(lua_State* L) {
 
@@ -154,7 +154,7 @@ namespace CCLib {
               return luaL_error(L, "Expected 1 arguments: address.");
           }
 
-          // Проверяем типы аргументов
+          // Checks argument type
           if (!lua_isnumber(L, 1)) {
               return luaL_error(L, "Argument must be number.");
           }
@@ -170,8 +170,8 @@ namespace CCLib {
               sizeof(result),
               0
           );
-          lua_pushnumber(L, result); // Возвращаем результат
-          return 1; // Количество возвращаемых значенийк
+          lua_pushnumber(L, result); 
+          return 1; 
       }
       int ReadAddressStr(lua_State* L) {
 
@@ -179,7 +179,7 @@ namespace CCLib {
               return luaL_error(L, "Expected 2 arguments: address and size");
           }
 
-          // Проверяем типы аргументов
+          // Checks argument type
           if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
               return luaL_error(L, "Both arguments must be numbers.");
           }
@@ -196,8 +196,8 @@ namespace CCLib {
               size,
               0
           );
-          lua_pushlstring(L, result.data(), size); // Возвращаем результат
-          return 1; // Количество возвращаемых значенийк
+          lua_pushlstring(L, result.data(), size); 
+          return 1; 
       }
       int WriteAddressStr(lua_State* L) {
 
@@ -205,7 +205,7 @@ namespace CCLib {
               return luaL_error(L, "Expected 3 arguments: address string size and string");
           }
 
-          // Проверяем типы аргументов
+          // Checks argument type
           if (!lua_isnumber(L, 1)) {
               return luaL_error(L, "First argument must be number.");
           }
@@ -228,8 +228,8 @@ namespace CCLib {
               binary_data.data(),
               binary_data.size(),
               0);
-          lua_pushboolean(L, Success); // Возвращаем результат
-          return 1; // Количество возвращаемых значенийк
+          lua_pushboolean(L, Success); 
+          return 1; 
       }
       int WriteAddressNum(lua_State* L) {
           int nargs = lua_gettop(L);
@@ -238,7 +238,7 @@ namespace CCLib {
               return luaL_error(L, "At least 2 arguments are expected: address and number.");
           }
 
-          // Проверяем типы аргументов
+          // Checks argument type
           if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
               return luaL_error(L, "Both arguments must be numbers.");
           }
@@ -290,13 +290,13 @@ namespace CCLib {
               numPtr,
               dataSize,
               0);
-          lua_pushboolean(L, Success); // Возвращаем результат
-          return 1; // Количество возвращаемых значенийк
+          lua_pushboolean(L, Success); 
+          return 1; 
       }
       int GetWorkingDirectory(lua_State* L) {
           std::string result = main_paths::work_dir_path;
-          lua_pushstring(L, result.c_str()); // Возвращаем результат
-          return 1; // Количество возвращаемых значенийк
+          lua_pushstring(L, result.c_str()); 
+          return 1; 
       }
       int GFS_addfile(lua_State* L) {
 
@@ -304,7 +304,7 @@ namespace CCLib {
               return luaL_error(L, "Expected 3 arguments: gfs archive name,relative path and path to files");
           }
 
-          // Проверяем типы аргументов
+          // Checks argument type
           if (!lua_isstring(L, 1) || !lua_isstring(L, 2) || !lua_isstring(L, 3)) {
               return luaL_error(L, "All arguments must be string.");
           }
@@ -340,8 +340,8 @@ namespace CCLib {
                     Current.add_file(filepath, relative_path, 1);
                     GFS_CHANGES.emplace_back(Current);
                 }
-          lua_pushboolean (L, 1); // Возвращаем результат
-          return 1; // Количество возвращаемых значенийк
+          lua_pushboolean (L, 1); 
+          return 1; 
       }
       int GFS_addfiles(lua_State* L) {
 
@@ -349,7 +349,7 @@ namespace CCLib {
               return luaL_error(L, "Expected 3 arguments: gfs archive name,relative path and path to files");
           }
 
-          // Проверяем типы аргументов
+          // Checks argument type
           if (!lua_isstring(L, 1) || !lua_isstring(L, 2) || !lua_isstring(L, 3)) {
               return luaL_error(L, "All arguments must be string.");
           }
@@ -385,15 +385,15 @@ namespace CCLib {
               Current.add_files(filepath, relative_path, 1);
               GFS_CHANGES.emplace_back(Current);
           }
-          lua_pushboolean(L, 1); // Возвращаем результат
-          return 1; // Количество возвращаемых значенийк
+          lua_pushboolean(L, 1); 
+          return 1; 
       }
       int Add_New_Permission(lua_State* L) {
           if (lua_gettop(L) < 1) {
               return luaL_error(L, "Expected 1 arguments: New permission");
           }
 
-          // Проверяем типы аргументов
+          // Checks argument type
           if (!lua_isstring(L, 1)) {
               return luaL_error(L, "Arguments must be string.");
           }
@@ -406,7 +406,7 @@ namespace CCLib {
               return 1;
           }
 
-          // Читаем все строки в вектор
+          // Reading all lines in vector
           std::vector<std::string> lines;
           std::string line;
           while (std::getline(inFile, line)) {
@@ -414,10 +414,10 @@ namespace CCLib {
           }
           inFile.close();
 
-          // Вставляем новую строку, например, после 2-й строки
+          // Insert new line
           lines.insert(lines.end() - 1, NewPermission);
 
-          // Перезаписываем файл
+          // Re-write file
           std::ofstream outFile(main_paths::sal_file_path);
           for (const auto& l : lines) {
               outFile << l << "\n";
@@ -431,7 +431,7 @@ namespace CCLib {
               return luaL_error(L, "Expected 3 arguments: gfs archive name, relative path and path to file extract");
           }
 
-          // Проверяем типы аргументов
+          // Checks argument type
           if (!lua_isstring(L, 1) || !lua_isstring(L, 2) || !lua_isstring(L, 3)) {
               return luaL_error(L, "All arguments must be string.");
           }
@@ -466,15 +466,15 @@ namespace CCLib {
               Current.extract_file(relative_path, filepath);
               GFS_CHANGES.emplace_back(Current);
           }
-          lua_pushboolean(L, 1); // Возвращаем результат
-          return 1; // Количество возвращаемых значенийк
+          lua_pushboolean(L, 1); 
+          return 1; 
       }
       int GBS_merge(lua_State* L) {
           if (lua_gettop(L) < 3) {
               return luaL_error(L, "Expected 3 arguments: gfs archive name, relative path and path to file extract");
           }
 
-          // Проверяем типы аргументов
+          // Checks argument type
           if (!lua_isstring(L, 1) || !lua_isstring(L, 2) || !lua_isstring(L, 3)) {
               return luaL_error(L, "All arguments must be string.");
           }
@@ -499,8 +499,8 @@ namespace CCLib {
               MEM_COMMIT | MEM_RESERVE,
               PAGE_EXECUTE_READWRITE
           );
-          lua_pushnumber(L, DWORD(memory)); // Возвращаем результат
-          return 1; // Количество возвращаемых значенийк
+          lua_pushnumber(L, DWORD(memory)); 
+          return 1; 
       }
       int has_mod(lua_State* L) {
           if (!lua_isstring(L, 1)) {
@@ -515,7 +515,7 @@ namespace CCLib {
               }
           }
           lua_pushboolean(L, hasmod);
-          return 1; // Количество возвращаемых значенийк
+          return 1; 
       }
 
 
@@ -529,7 +529,7 @@ namespace CCLib {
             lua_pushinteger(L, vars->value.integer);
             break;
         case VAR_STRING:
-            lua_pushstring(L, vars->value.str);  // Осторожно: str должен быть валидным!
+            lua_pushstring(L, vars->value.str);  // Carefull: str need be valid!
             break;
         case VAR_BOOLEAN:
             lua_pushboolean(L, vars->value.boolean);
@@ -543,7 +543,7 @@ namespace CCLib {
         default:
             luaL_error(L, "Unknown variable type: %d", vars->type);
         }
-        lua_setfield(L, -2, vars->name);  // Добавляем в таблицу
+        lua_setfield(L, -2, vars->name);  // Adding to table
     }
 }
 }
