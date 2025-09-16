@@ -23,6 +23,7 @@ public:
     void add_file(const fs::path& file_path, const std::string& relative_path_in_archive, bool replace_existing = false);
     void add_files(const fs::path& files_path, const std::string& relative_path_in_archive = "", bool replace_existing = false);
     void extract_file(const std::string& relative_path_in_archive, const fs::path& output_path);
+    void extract_files(const fs::path& output_path, const std::string& relative_path_in_archive = "");
     void commit_changes();
     fs::path gfs_path;
 private:

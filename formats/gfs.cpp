@@ -97,6 +97,7 @@ GFSEdit::GFSEdit(const fs::path path) : gfs_path(path) {
 
         data_offset += file_len;
     }
+    CloseHandle(hFile);
 }
 
 GFSEdit::~GFSEdit() {
@@ -142,6 +143,8 @@ void GFSEdit::add_file(const fs::path& file_path, const std::string& relative_pa
     if (meta_it != files_meta_data.end() && !replace_existing) {
         throw std::runtime_error("File already exists in archive: " + relative_path_in_archive);
     }
+
+
 
     pending_changes.push_back({
         relative_path_in_archive,
@@ -215,6 +218,41 @@ void GFSEdit::extract_file(const std::string& relative_path_in_archive, const fs
     CloseHandle(ext_FILE);
 }
 
+void GFSEdit::extract_files(const fs::path& output_path, const std::string& relative_path_in_archive) {
+    // Ќормализуем путь дл€ сравнени€: добавл€ем / в конец если это папка
+    std::string search_path = relative_path_in_archive;
+    if (!search_path.empty() && search_path.back() != '/') {
+        search_path += '/';
+    }
+
+    for (const auto& meta : files_meta_data) {
+        // ѕровер€ем принадлежность к целевой директории
+        if (search_path.empty() ||
+            meta.relative_path == relative_path_in_archive ||
+            (meta.relative_path.size() > search_path.size() &&
+                meta.relative_path.substr(0, search_path.size()) == search_path)) {
+
+            // ‘ормируем полный путь дл€ извлечени€
+            fs::path full_output_path = output_path;
+            if (!search_path.empty()) {
+                // ”бираем префикс родительской директории из пути
+                std::string relative_part = meta.relative_path.substr(search_path.size());
+                full_output_path /= relative_part;
+            }
+            else {
+                full_output_path /= meta.relative_path;
+            }
+
+            try {
+                extract_file(meta.relative_path, full_output_path);
+            }
+            catch (const std::exception& e) {
+                std::cerr << "Error extracting file " << meta.relative_path << ": " << e.what() << std::endl;
+            }
+        }
+    }
+}
+
 void GFSEdit::commit_changes() {
     if (pending_changes.empty()) return;
 
@@ -260,7 +298,7 @@ void GFSEdit::commit_changes() {
                 }
             }
             if (should_erase) {
-                std::cout << "Replace File:" << gfs_path.filename() << '\n' 
+                std::cout << "Delete File (Because of replace):" << gfs_path.filename() << '\n' 
                     << it_files->relative_path << '\n';
                 it_files = files_meta_data.erase(it_files); // erase возвращает следующий валидный итератор
             }
@@ -277,6 +315,8 @@ void GFSEdit::commit_changes() {
         }
 
         for (const auto& change : pending_changes) {
+            std::cout << "Adding NEW File:" << gfs_path.filename() << '\n'
+                << change.relative_path << '\n';
             append_byteswapped(buffer, uint64_t(change.relative_path.size()));
             buffer.insert(buffer.end(),
                 change.relative_path.c_str(),

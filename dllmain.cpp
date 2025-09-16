@@ -5,8 +5,11 @@
 #include <fstream>
 #include <filesystem>
 #include <memory>
+#include "json.hpp"
 
 namespace fs = std::filesystem;
+
+using json = nlohmann::json;
 
 #include "dllmain.h"
 #include "dll_proxy/dll_proxy.h"
@@ -70,9 +73,6 @@ bool HandleProcessAttach(HMODULE hModule) {
         Console::CleanupConsole();
         return TRUE;
     }
-    std::cout << "Test";
-
-    std::cout << "Test2";
     json savedata;
     if (!InitializePaths(savedata)) {
         OutputDebugString("We can't init path!");
@@ -86,6 +86,7 @@ bool HandleProcessAttach(HMODULE hModule) {
     if (!CreateGFSLinks()) {
         OutputDebugString("We can't create symlink!");
     };
+    AddLoc();
 #ifdef _DEBUG
     system("pause");
 #endif
@@ -157,6 +158,7 @@ bool InitializePaths(json& savedata)
         main_paths::mods_dir_path = main_paths::work_dir_path + "\\mods";
         main_paths::save_file_path = main_paths::work_dir_path + "\\" + "\\" + config::SAVE_FILE_NAME;
         main_paths::sal_file_path = main_paths::work_dir_path + "\\Salmon\\FULL_SGCC.sal";
+        main_paths::loc_files_path = main_paths::work_dir_path + "\\data02\\localization";
         if (config::REINSTALL_ALL) {
             Console::DLL_WriteOutput("We delete directories and files!\n", FOREGROUND_BLUE);
             fs::remove_all(main_paths::data02_dir_path);
@@ -176,7 +178,7 @@ bool InitializePaths(json& savedata)
 void CreateRequiredDirectoriesAndFiles(json& savedata)
 {
         // Create directory
-        for (const auto& dir : { main_paths::data02_dir_path, main_paths::mods_dir_path }) {
+        for (const auto& dir : { main_paths::data02_dir_path, main_paths::mods_dir_path, main_paths::loc_files_path }) {
             if (!fs::exists(dir) && !fs::create_directory(dir)) {
                 throw std::runtime_error("Failed to create directory: " + dir);
             }
@@ -313,5 +315,108 @@ void SaveModData(const json& savedata)
     catch (const std::exception& e) {
         std::string errorMessage = "[C] Error saving mod data: " + std::string(e.what()) + "\n";
         Console::DLL_WriteOutput(errorMessage.c_str(), FOREGROUND_RED);
+    }
+}
+
+void AddLoc() {
+    if (loc_json.empty()) {
+        return; // Нет данных для добавления
+    }
+    Console::DLL_WriteOutput("We are adding localization", FOREGROUND_BLUE);
+    std::cout << loc_json << std::endl;
+    // Определяем целевой путь
+    fs::path data01_path = main_paths::data01_dir_path + "\\core.gfs";
+    fs::path data02_path = main_paths::data02_dir_path + "\\core.gfs";
+
+    if (fs::is_symlink(data02_path)) {
+        fs::remove(data02_path);
+        fs::copy_file(data01_path, data02_path);
+    }
+    else {
+        if (!fs::exists(data02_path)) {
+            fs::copy_file(data01_path, data02_path);
+        }
+    }
+    fs::path target = data02_path;
+    try {
+        // Извлекаем файлы локализации
+        GFSEdit localization{ target };
+        localization.extract_files(main_paths::loc_files_path, "core/localization");
+
+        // Обрабатываем все JSON файлы в директории
+        for (const auto& entry : fs::directory_iterator(main_paths::loc_files_path)) {
+            if (entry.is_regular_file() && entry.path().extension() == ".json") {
+                try {
+                    std::cout << "Working with: " << entry.path() << std::endl;
+
+                    // Читаем JSON файл
+                    std::ifstream file(entry.path());
+                    if (!file.is_open()) {
+                        std::cerr << "Opening file error: " << entry.path() << std::endl;
+                        continue;
+                    }
+
+                    json data;
+                    try {
+                        data = json::parse(file);
+                    }
+                    catch (const json::parse_error& e) {
+                        std::cerr << "Error parsing json in file" << entry.path() << ": " << e.what() << std::endl;
+                        file.close();
+                        continue;
+                    }
+                    file.close();
+
+                    bool modified = false;
+
+                    // Отладочная информация о loc_json
+                    std::cout << "loc_json have " << loc_json.size() << " elements" << std::endl;
+
+                    // Проверяем, является ли loc_json объектом (а не массивом)
+                    if (loc_json.is_object()) {
+
+                        for (auto& [key, value] : loc_json.items()) {
+                            std::cout << "Checking key: " << key << std::endl;
+
+                            if (data.find(key) == data.end()) {
+                                std::cout << "key '" << key << "' not exsist, adding..." << std::endl;
+                                data[key] = value;
+                                modified = true;
+                            }
+                            else {
+                                std::cout << "Key '" << key << "' already exsist, skipping..." << std::endl;
+                            }
+                        }
+                    }
+                    else {
+                        std::cerr << "Error: loc_json are NOT JSON" << std::endl;
+                    }
+
+                    // Записываем изменения, если были добавлены ключи
+                    if (modified) {
+                        std::ofstream out_file(entry.path());
+                        if (!out_file.is_open()) {
+                            std::cerr << "Error opening file: " << entry.path() << std::endl;
+                            continue;
+                        }
+                        out_file << data.dump(4); // Форматируем с отступами
+                        out_file.close();
+                        std::cout << "File update: " << entry.path() << std::endl;
+                    }
+                    else {
+                        std::cout << "No changes for file: " << entry.path() << std::endl;
+                    }
+                }
+                catch (const std::exception& e) {
+                    std::cerr << "Error processing file: " << entry.path() << ": " << e.what() << std::endl;
+                }
+            }
+        }
+        localization.add_files(main_paths::loc_files_path, "core/localization", true);
+        localization.commit_changes();
+        fs::remove_all(main_paths::loc_files_path);
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error working with GFS file: " << e.what() << std::endl;
     }
 }

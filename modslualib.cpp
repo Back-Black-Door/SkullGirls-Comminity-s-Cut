@@ -1,6 +1,6 @@
 #include "modslualib.h"
 #pragma comment(lib, "lua54.lib")
-#include <lua.hpp>
+#include "lua.hpp"
 #include <memory>
 #include <fstream>
 #include <iostream>
@@ -452,22 +452,42 @@ namespace CCLib {
                   fs::copy_file((data01_path / gfsname).replace_extension(".gfs"), targetdata02);
               }
           }
-          auto meta_it = std::find_if(
-              GFS_CHANGES.begin(),
-              GFS_CHANGES.end(),
-              [&](const GFSEdit& edit)
-              { return edit.gfs_path == targetdata02; });
 
-          if (meta_it != GFS_CHANGES.end()) {
-              meta_it->extract_file(relative_path, filepath);
-          }
-          else {
-              GFSEdit Current(targetdata02);
-              Current.extract_file(relative_path, filepath);
-              GFS_CHANGES.emplace_back(Current);
-          }
+            GFSEdit Current(targetdata02);
+            Current.extract_file(relative_path, filepath);
           lua_pushboolean(L, 1); 
           return 1; 
+      }
+      int gfsExtractFiles(lua_State* L) {
+          if (lua_gettop(L) < 3) {
+              return luaL_error(L, "Expected 3 arguments: gfs archive name, relative path and path to file extract");
+          }
+
+          // Checks argument type
+          if (!lua_isstring(L, 1) || !lua_isstring(L, 2) || !lua_isstring(L, 3)) {
+              return luaL_error(L, "All arguments must be string.");
+          }
+          const std::string gfsname = static_cast<std::string>(lua_tostring(L, 1));
+          const std::string relative_path = static_cast<std::string>(lua_tostring(L, 2));
+          const fs::path filepath = static_cast<std::string>(lua_tostring(L, 3));
+          fs::path data01_path = main_paths::data01_dir_path;
+          fs::path data02_path = main_paths::data02_dir_path;
+          fs::path targetdata02 = data02_path / gfsname;
+
+          targetdata02.replace_extension(".gfs");
+          if (fs::is_symlink(targetdata02)) {
+              fs::remove(targetdata02);
+              fs::copy_file((data01_path / gfsname).replace_extension(".gfs"), targetdata02);
+          }
+          else {
+              if (!fs::exists(targetdata02)) {
+                  fs::copy_file((data01_path / gfsname).replace_extension(".gfs"), targetdata02);
+              }
+          }
+          GFSEdit Current(targetdata02);
+          Current.extract_files(filepath, relative_path);
+          lua_pushboolean(L, 1);
+          return 1;
       }
       int GBS_merge(lua_State* L) {
           if (lua_gettop(L) < 3) {
@@ -534,6 +554,100 @@ namespace CCLib {
           return 1;
       }
 
+      int lua_add_to_json(lua_State* L) {
+          // Проверяем количество аргументов
+          if (lua_gettop(L) != 3) {
+              luaL_error(L, "Expected 3 arguments: path to file, key, value");
+              return 0;
+          }
+
+          // Получаем аргументы из Lua
+          const char* filepath = luaL_checkstring(L, 1);
+          const char* key = luaL_checkstring(L, 2);
+
+          // Определяем тип значения и извлекаем его
+          json value;
+          int type = lua_type(L, 3);
+
+          switch (type) {
+          case LUA_TNUMBER:
+              if (lua_isinteger(L, 3)) {
+                  value = lua_tointeger(L, 3);
+              }
+              else {
+                  value = lua_tonumber(L, 3);
+              }
+              break;
+          case LUA_TBOOLEAN:
+              value = (bool)lua_toboolean(L, 3);
+              break;
+          case LUA_TSTRING:
+              value = lua_tostring(L, 3);
+              break;
+          default:
+              luaL_error(L, "Uncorrect value type");
+              return 0;
+          }
+
+          try {
+              json j;
+
+              // Пытаемся прочитать существующий файл
+              std::ifstream input_file(filepath);
+              if (input_file.good()) {
+                  input_file >> j;
+                  input_file.close();
+              }
+
+              // Добавляем/обновляем значение
+              j[key] = value;
+
+              // Записываем обратно в файл
+              std::ofstream output_file(filepath);
+              output_file << j.dump(4); // 4 - отступ для красивого форматирования
+              output_file.close();
+
+              lua_pushboolean(L, true);
+              return 1;
+          }
+          catch (const std::exception& e) {
+              luaL_error(L, e.what());
+              return 0;
+          }
+      }
+
+      int gfsCommitChanges(lua_State* L) {
+          for (auto& i : GFS_CHANGES) {
+              i.commit_changes();
+          }
+          GFS_CHANGES.clear();
+          lua_pushboolean(L, true);
+          return 1;
+      }
+      int addLocalization(lua_State* L) {
+          if (lua_gettop(L) != 2) {
+              luaL_error(L, "Expected 2 arguments:key, value");
+              return 0;
+          }
+          // Проверяем типы аргументов
+          if (!lua_isstring(L, 1)) {
+              luaL_error(L, "First argument must be a string (key)");
+              return 0;
+          }
+
+          if (!lua_isstring(L, 2)) {
+              luaL_error(L, "Second argument must be a string (value)");
+              return 0;
+          }
+
+          const char* key = lua_tostring(L, 1);
+          const char* value = lua_tostring(L, 2);
+
+          loc_json[key] = value;
+
+          lua_pushboolean(L, true);
+          return 1;
+      }
 
       void push_vars(lua_State* L, const CCLib::luaL_Var* vars) {
     for (; vars->name != NULL; vars++) {

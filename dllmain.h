@@ -6,6 +6,8 @@
 
 using json = nlohmann::json;
 
+inline json loc_json;
+
 namespace config {
 	inline const int CURRENT_CC_VERSION = 1;
 	inline const std::string EXE_NAME = "SkullGirls.exe";
@@ -27,6 +29,7 @@ namespace main_paths {
 	inline std::string mods_dir_path;
 	inline std::string save_file_path;
 	inline std::string sal_file_path;
+	inline std::string loc_files_path;
 };
 bool HandleProcessAttach(HMODULE hModule);
 bool HandleProcessDetach(HMODULE hModule);
@@ -38,3 +41,4 @@ void ProcessModFile(const fs::directory_entry& entry, json& savedata);
 void ManageModLifecycle(Mod& mod, json& savedata);
 void SaveModData(const json& savedata);
 bool CreateGFSLinks();
+void AddLoc();

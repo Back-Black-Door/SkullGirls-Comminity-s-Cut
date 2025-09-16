@@ -81,6 +81,9 @@ namespace CCLib {
     int allocate_executable_memory(lua_State* L);
     int has_mod(lua_State* L);
     int getModVersion(lua_State* L);
+    int gfsExtractFiles(lua_State* L);
+    int gfsCommitChanges(lua_State* L);
+    int addLocalization(lua_State* L);
 
     inline const luaL_Reg CClib_func[] = {
      {"getGameBaseAddress", GetGameBaseAdress},
@@ -93,10 +96,13 @@ namespace CCLib {
      {"gfsAddFiles", GFS_addfiles},
      {"addNewPermission", Add_New_Permission},
      {"gfsExtractFile", GFS_extract_file},
+     {"gfsExtractFiles", gfsExtractFiles},
      {"gbsMerge", GBS_merge},
      {"allocateExecutableMemory", allocate_executable_memory},
      {"hasMod", has_mod},
      {"getModVersion", getModVersion},
+     {"gfsCommitChanges", gfsCommitChanges},
+     {"addLocalization", addLocalization},
      {nullptr, nullptr} // Маркер конца
     };
     void push_vars(lua_State* L, const luaL_Var* vars);
