@@ -101,7 +101,7 @@ GFSEdit::GFSEdit(const fs::path path) : gfs_path(path) {
 }
 
 GFSEdit::~GFSEdit() {
-    CloseHandle(hFile);
+    //CloseHandle(hFile);
 }
 
 void GFSEdit::print_header() {
@@ -194,18 +194,25 @@ void GFSEdit::extract_file(const std::string& relative_path_in_archive, const fs
         NULL
     );
 
+    hFile = CreateFile(
+        gfs_path.string().c_str(),
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
     if (ext_FILE == INVALID_HANDLE_VALUE) {
         throw std::runtime_error("Failed to create output file: " + output_path.string());
     }
-
-
 
     if (!SetFilePointer(hFile, header.data_offset + it->data_offset, NULL, FILE_BEGIN)) {
         throw std::runtime_error("Failed to set file pointer in archive");
     }
 
     std::vector<unsigned char> buffer(it->data_length);
-
 
     if (!ReadFile(hFile, buffer.data(), buffer.size(), NULL, NULL)) {
         throw std::runtime_error("Failed to read from archive");
@@ -216,6 +223,7 @@ void GFSEdit::extract_file(const std::string& relative_path_in_archive, const fs
     }
 
     CloseHandle(ext_FILE);
+    CloseHandle(hFile);
 }
 
 void GFSEdit::extract_files(const fs::path& output_path, const std::string& relative_path_in_archive) {
@@ -432,17 +440,6 @@ void GFSEdit::commit_changes() {
         CloseHandle(hFile);
         fs::remove(gfs_path);
         fs::rename(temp_path, gfs_path);
-
-        hFile = CreateFile(
-            gfs_path.string().c_str(),
-            GENERIC_READ | GENERIC_WRITE,
-            0,
-            NULL,
-            OPEN_EXISTING,
-            FILE_ATTRIBUTE_NORMAL,
-            NULL
-        );
-
         pending_changes.clear();
     }
     catch (const std::exception& e) {

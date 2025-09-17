@@ -158,7 +158,6 @@ bool InitializePaths(json& savedata)
         main_paths::mods_dir_path = main_paths::work_dir_path + "\\mods";
         main_paths::save_file_path = main_paths::work_dir_path + "\\" + "\\" + config::SAVE_FILE_NAME;
         main_paths::sal_file_path = main_paths::work_dir_path + "\\Salmon\\FULL_SGCC.sal";
-        main_paths::loc_files_path = main_paths::work_dir_path + "\\data02\\localization";
         if (config::REINSTALL_ALL) {
             Console::DLL_WriteOutput("We delete directories and files!\n", FOREGROUND_BLUE);
             fs::remove_all(main_paths::data02_dir_path);
@@ -178,7 +177,7 @@ bool InitializePaths(json& savedata)
 void CreateRequiredDirectoriesAndFiles(json& savedata)
 {
         // Create directory
-        for (const auto& dir : { main_paths::data02_dir_path, main_paths::mods_dir_path, main_paths::loc_files_path }) {
+        for (const auto& dir : { main_paths::data02_dir_path, main_paths::mods_dir_path}) {
             if (!fs::exists(dir) && !fs::create_directory(dir)) {
                 throw std::runtime_error("Failed to create directory: " + dir);
             }
@@ -323,6 +322,7 @@ void AddLoc() {
         return; // Нет данных для добавления
     }
     Console::DLL_WriteOutput("We are adding localization", FOREGROUND_BLUE);
+    main_paths::loc_files_path = main_paths::work_dir_path + "\\data02\\localization";
     std::cout << loc_json << std::endl;
     // Определяем целевой путь
     fs::path data01_path = main_paths::data01_dir_path + "\\core.gfs";
@@ -342,7 +342,7 @@ void AddLoc() {
         // Извлекаем файлы локализации
         GFSEdit localization{ target };
         localization.extract_files(main_paths::loc_files_path, "core/localization");
-
+        std::cout << "HANDLE: " << localization.hFile << '\n';
         // Обрабатываем все JSON файлы в директории
         for (const auto& entry : fs::directory_iterator(main_paths::loc_files_path)) {
             if (entry.is_regular_file() && entry.path().extension() == ".json") {
@@ -412,9 +412,10 @@ void AddLoc() {
                 }
             }
         }
+
         localization.add_files(main_paths::loc_files_path, "core/localization", true);
         localization.commit_changes();
-        fs::remove_all(main_paths::loc_files_path);
+        //fs::remove_all(main_paths::loc_files_path);
     }
     catch (const std::exception& e) {
         std::cerr << "Error working with GFS file: " << e.what() << std::endl;
