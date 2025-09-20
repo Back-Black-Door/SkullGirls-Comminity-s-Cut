@@ -1,6 +1,6 @@
 #include "modslualib.h"
 #pragma comment(lib, "lua54.lib")
-#include "lua.hpp"
+#include "lua/lua.hpp"
 #include <memory>
 #include <fstream>
 #include <iostream>
@@ -64,10 +64,12 @@ Mod::Mod(const std::string& modPath) : LuaState(nullptr), luaRefMod(LUA_NOREF) {
             }
             lua_pop(LuaState, 1);
 
-            lua_getfield(LuaState, -1, "Path");
+            lua_getfield(LuaState, -1, "Desc");
             if (lua_isstring(LuaState, -1)) {
-                ModInfo.modPath = lua_tostring(LuaState, -1);
+                ModInfo.modDesc = lua_tostring(LuaState, -1);
             }
+            ModInfo.modPath = modPath;
+
             lua_pop(LuaState, 1);
             lua_pop(LuaState, 1);
         }

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <io.h>
 #include <fcntl.h>
-
+#include "Overlay/Overlay.h"
 #include "Console.h"
 #include "Thread/ScopedLock.h"
 
@@ -13,6 +13,7 @@ static CriticalSection g_consoleCs;  // Using our class instead of Windows's
 namespace Console {
     bool InitializeConsole()
     {
+        Show_Console = true;
         if (console_allocated) return true;
 
         if (!AllocConsole())
@@ -43,8 +44,6 @@ namespace Console {
         return true;
     }
 
-
-    // ¬нутренн€€ функци€ дл€ вывода
     static void WriteOutputInternal(const char* format, int colorargs, va_list args)
     {
         if (!console_allocated) return;
@@ -138,4 +137,31 @@ namespace Console {
             //Critical Section automatically clears after g_consoleCs
         }
     }
+
+    void HideConsole() {
+        if (console_allocated)
+        {
+            ScopedLock lock(g_consoleCs);
+
+            HWND hConsole = GetConsoleWindow();
+            if (hConsole != NULL)
+            {
+                ShowWindow(hConsole, SW_HIDE);
+            }                       
+        }
+    }
+
+    void ShowConsole() {
+        if (console_allocated)
+        {
+            ScopedLock lock(g_consoleCs);
+
+            HWND hConsole = GetConsoleWindow();
+            if (hConsole != NULL)
+            {
+                ShowWindow(hConsole, SW_SHOW);
+            }
+        }
+    }
+
 }

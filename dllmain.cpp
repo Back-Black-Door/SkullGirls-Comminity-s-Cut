@@ -91,14 +91,15 @@ bool HandleProcessAttach(HMODULE hModule) {
     system("pause");
 #endif
 #ifndef _DEBUG
-    Console::CleanupConsole();
+    Console::Show_Console = false;
+    Console::HideConsole();
 #endif // !_DEBUG
     return TRUE;
 }
 
 bool HandleProcessDetach(HMODULE hModule) {
-
-    DLL_PROXY_UNLOAD();
+    Console::Show_Console = true;
+    Console::ShowConsole();
     Console::DLL_DebugWriteOutput("DLL_PROXY_UNLOAD!\n", FOREGROUND_GREEN);
 
     SGProccesInfo.CloseHandles();

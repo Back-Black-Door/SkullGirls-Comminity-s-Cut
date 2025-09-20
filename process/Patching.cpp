@@ -5,6 +5,8 @@
 #include <iostream>
 #include "../dllmain.h"
 #include "Patching.h"
+#include "../Console.h"
+
 
 namespace PachingUtils {
     const bool NewsBreaker(const HANDLE& ThreadHande, const HANDLE& ProcessHandle, const DWORD BaseAdress) {
@@ -30,7 +32,7 @@ namespace PachingUtils {
             return false;
         }
         WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x0011BE67), &JMP, 1, NULL);
-        std::cout << "Breaking .gfs Validathion!\n";
+        Console::DLL_WriteOutput("Breaking .gfs Validathion!");
         return true;
     }
     const bool SalValidathionBreaker(const HANDLE& ThreadHande, const HANDLE& ProcessHandle, const DWORD BaseAdress) {
@@ -44,7 +46,7 @@ namespace PachingUtils {
             return false;
         }
         WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x5C0F4), &JMP, 1, NULL);
-        std::cout << "Breaking .sal Validathion!\n";
+        Console::DLL_WriteOutput("Breaking .sal Validathion!");
         return true;
     }
 
@@ -74,7 +76,7 @@ namespace PachingUtils {
 
         WriteProcessMemory(ProcessHandle, (LPVOID)(BaseAdress + 0x3e922c), &NewString, sizeof NewString, 0);
 
-        std::cout << "Change Data Directory First Time\n";
+        Console::DLL_WriteOutput("Change Data Directory");
         return true;
     }
     const bool ChangeDataDirectorySecondTime(const HANDLE& ThreadHande, const HANDLE& ProcessHandle, const DWORD BaseAdress) {
@@ -159,7 +161,7 @@ namespace PachingUtils {
             &old
         );
 
-        std::cout << "Change .sal File Name\n";
+        Console::DLL_WriteOutput("Change .sal File Name");
         return true;
     }
 }

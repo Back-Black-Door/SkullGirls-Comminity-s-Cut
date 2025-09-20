@@ -5,9 +5,11 @@
 #include "../process/Patching.h"
 #include "../process/process.h"
 #include "../modslualib.h"
+
 bool ApplyGamePatches();
 bool ExecuteModLaunch();
 bool ExecuteModDeinit();
+bool ExecuteModLoop();
 
 DWORD IsolatedThread::Run() {
     Console::DLL_DebugWriteOutput("IsolatedThread started\n");
@@ -26,6 +28,7 @@ DWORD IsolatedThread::Run() {
         if (WaitForSingleObject(m_hStopEvent, 10) == WAIT_OBJECT_0) {
             break;
         }
+        //ExecuteModLoop();
 
 
         Sleep(1000);
@@ -61,8 +64,8 @@ bool ExecuteModLaunch()
     Console::DLL_DebugWriteOutput(("ExecuteModLaunch " + std::to_string(mods.size()) + " mods\n").c_str());
 
     for (size_t i = 0; i < mods.size(); ++i) {
-        Console::DLL_DebugWriteOutput(("Processing mod " + std::to_string(i) + ": " +
-            mods[i]->ModInfo.modName + "\n").c_str());
+        //Console::DLL_DebugWriteOutput(("Processing mod " + std::to_string(i) + ": " +
+        //    mods[i]->ModInfo.modName + "\n").c_str());
 
         try {
             mods[i]->launch();
@@ -83,6 +86,24 @@ bool ExecuteModDeinit()
 
         try {
             mods[i]->deinit();
+        }
+        catch (const std::exception& e) {
+            Console::DLL_WriteOutput(("Error in deinit: " + std::string(e.what()) + "\n").c_str(), FOREGROUND_RED);
+        }
+    }
+
+    return true;
+}
+
+bool ExecuteModLoop()
+{
+
+    for (size_t i = 0; i < mods.size(); ++i) {
+        Console::DLL_DebugWriteOutput(("Processing mod " + std::to_string(i) + ": " +
+            mods[i]->ModInfo.modName + "\n").c_str());
+
+        try {
+            mods[i]->loop();
         }
         catch (const std::exception& e) {
             Console::DLL_WriteOutput(("Error in deinit: " + std::string(e.what()) + "\n").c_str(), FOREGROUND_RED);

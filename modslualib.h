@@ -2,7 +2,7 @@
 #pragma once
 
 #pragma comment(lib, "lua54.lib")
-#include <lua.hpp>
+#include <lua/lua.hpp>
 #include <string>
 #include <filesystem>
 #include <vector>
@@ -16,6 +16,7 @@ public:
         std::string modName;
         int modVersion{ 0 };
         std::string modAuthor;
+        std::string modDesc;
         std::filesystem::path modPath;
     };
 
@@ -98,7 +99,7 @@ namespace CCLib {
      {"gfsExtractFile", GFS_extract_file},
      {"gfsExtractFiles", gfsExtractFiles},
      {"gbsMerge", GBS_merge},
-     {"allocateExecutableMemory", allocate_executable_memory},
+     //{"allocateExecutableMemory", allocate_executable_memory}, //We need Vitrual Free, so do this func later
      {"hasMod", has_mod},
      {"getModVersion", getModVersion},
      {"gfsCommitChanges", gfsCommitChanges},

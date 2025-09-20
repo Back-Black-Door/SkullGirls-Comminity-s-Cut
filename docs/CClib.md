@@ -1,4 +1,4 @@
-﻿# CClib Documentation for ModLoader
+# CClib Documentation for ModLoader
 ## Introduction
 CCLib provides a set of functions for working with game memory and the file system in Skullgirls. All functions are available through the CCLib table.
 
@@ -125,6 +125,49 @@ CCLib.data02_dir       -- Full path to data02
 CCLib.savefile_path    -- Full path to CC save file
 CCLib.salfile_path     -- Full path to CC sal file (FULL_SGCC.sal)
 ```
+
+### addNewPermission(permission)
+Adds a new permission to FULL_SGCC.sal (Sometimes necessary for new stages or trials)
+
+Parameters:
+
+`permission` - permission (string)
+
+Return value: `boolean` (true on success)
+
+Example:
+
+```lua
+install = function()
+	CCLib.addNewPermission("Filia_Pal1")  --Writing new permission (line) in FULL_SGCC.sal
+end
+```
+
+### addLocalization(key, value)
+Adds localization to all \*\_loc.json files
+
+Parameters:
+
+`key` - key (string)
+
+`value` - value (string)
+
+Return value: `boolean` (true on success)
+
+Example:
+
+```lua
+install = function()
+	CCLib.addLocalization("Filia_Pal1", "Anna Killer") --adding localizathion in all *_loc.json files
+end
+```
+## GFS
+Please note: we do not affect the GFS archives located at data01. If we change them in any way, we create a copy at data02. Otherwise, we create a symlink (They don't weigh anything, so it doesn't matter.).
+This is done so that you can launch the original game without modifications at any time using the "`-originalgame`" launch parameter.
+This is also done to prevent damage to the original files and to allow you to reinstall mods from zero, using the "`-reinstall`" launch parameter.
+
+The `gfsAddFile()` or `gfsAddFiles()` functions don't actually add files. You're simply creating *pending changes*. Once your function (install or update) completes, these changes will be *committed automatically*. However, you can also use the `gfsCommitChanges()` function if desired. (This is most often used when working with files that other mods also want to use, such as `stage.ini`)
+
 ### gfsAddFile(gfs_archive_name, relative_path, files_path)
 Adds files to a GFS archive in data02 (creates a copy from data01 if it doesn't exist).
 
@@ -148,7 +191,7 @@ end
 ```
 
 ### gfsAddFiles(gfs_archive_name, relative_path, file_path)
-Adds a single file to a GFS archive in data02.
+Adds files to a GFS archive in data02. (All Files!)
 
 Parameters:
 
@@ -193,6 +236,49 @@ init = function()
 end
 ```
 
+### gfsExtractFiles(gfs_archive_name, relative_path, extract_path)
+Extracts files from a GFS archive. (All Files!)
+
+Parameters:
+
+`gfs_archive_name` - name of the GFS archive
+
+`relative_path` - relative path to the file in the archive
+
+`extract_path` - path to extract the file to
+
+Return value: `boolean` (true on success)
+
+Example:
+
+```lua
+init = function()
+    local extractPath = CCLib.work_dir .. "\\mods\\test\\stages.ini"
+    local success = CCLib.gfsExtractFiles("core", "core/stages.ini", extractPath)
+    print("[Lua] File extracted: " .. tostring(success))
+end
+```
+
+### gfsCommitChanges()
+Commit all pending changes.
+
+Return value: `boolean` (true on success)
+
+Example:
+
+```lua
+init = function()
+	...
+	CCLib.gfsAddFiles("core", "core/stages.ini", extractPath)
+    local success = CCLib.gfsCommitChanges()
+    print("[Lua] GFS commit: " .. tostring(success))
+end
+```
+
+## GBS
+
+GBS is the file format used by OtterUI for rendering. Currently, only font and texture merging is supported.
+
 ### gbsMerge(original_gbs, merge_gbs, output_path)
 Merges two GBS files, using the original file as a base.
 
@@ -218,6 +304,9 @@ init = function()
     print("[Lua] GBS merged: " .. tostring(success))
 end
 ```
+
+
+
 ## Mods Interaction
 I would ask you to make mods more independent and self-contained. 
 If you really need another mod, use `required` - 
