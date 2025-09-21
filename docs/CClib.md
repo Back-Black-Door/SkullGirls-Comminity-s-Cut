@@ -371,7 +371,7 @@ ModInfo = {
     ModName = "Anna_Killer",   --Mod Name. Be original - If ModName repeat another mod name, an error will occur
     Version = 1,           --Mod Version. Used in Mod.Update() func
     Author = "ImpDi",      --Not used anywhere, but hey - leave your mark :^>
-    Path = "mods/Anna_Killer.lua" --Mod Path. Someday, might be useful. Maybe.
+    Desc = "Adds stage Anna Killer" --Description of the mod. What does it actually do?
 }
 
 Mod = {
@@ -383,42 +383,48 @@ Mod = {
         local uiwin = i .. "\\mods\\Anna_Killer\\ui-win"    --Locate ui-win folder (We can add a whole folder!)
         local music_intro = i .. "\\mods\\Anna_Killer\\tech_intro.wav"  --Locate music file
         local music_loop = i .. "\\mods\\Anna_Killer\\tech_loop.wav"    --Locate music file
-        local Stagesinifile = i .. "\\mods\\Anna_Killer\\stages.ini"    --Locate stage.ini file
-        local Charselect_gbs = i .. "\\mods\\Anna_Killer\\Charselect.gbs"   --Locate Charselect.gbs file
+        local Stagesinifile = i .. "\\mods\\Anna_Killer\\temp\\stages.ini"    --Locate stage.ini file
+        local Charselect_gbs = i .. "\\mods\\Anna_Killer\\temp\\Charselect.gbs"   --Locate Charselect.gbs file
         local Charselect_gbs_merge = i .. "\\mods\\Anna_Killer\\Charselect_merge.gbs"   --Locate Charselect.gbs file
         local Charselect_gbs_path_to_write = i .. "\\mods\\Anna_Killer\\ui-win\\ui\\Win\\Charselect.gbs"
-        CCLib.add_new_permission("Filia_Pal7")  --Writing new permission (line) in FULL_SGCC.sal
-        CCLib.gfs_extract_file("core", "core/stages.ini", Stagesinifile )   --Extract stages.ini from core.gfs
+        local localization = i .. "\\mods\\Anna_Killer\\temp\\localization"
+        os.remove(Stagesinifile)
+        os.remove(Charselect_gbs)   --We delete temp files, if they exisist before install
+
+        CCLib.gfsExtractFile("core", "core/stages.ini", Stagesinifile )   --Extract stages.ini from core.gfs
         local file = io.open(Stagesinifile, "a+")
         if not file then
             return false, "Can't open file"
         end
-        file:write("Filia_Pal7 cs_anna_killer stage_anna_killer\n")
+        file:write("Filia_Pal1 cs_anna_killer stage_anna_killer\n")
         file:close()    --Write new line to file
-        CCLib.gfs_addfile("core","core/stages.ini", Stagesinifile)  --Add file stages.ini to core.gfs
+        CCLib.gfsAddFile("core","core/stages.ini", Stagesinifile)  --Add file stages.ini to core.gfs
 
-        CCLib.gfs_addfile("music-win","music/tech_intro.wav", music_intro)  --Add music file to music-win.gfs
-        CCLib.gfs_addfile("music-win","music/tech_loop.wav", music_loop)    --Add music file to music-win.gfs
+        CCLib.gfsAddFile("music-win","music/tech_intro.wav", music_intro)  --Add music file to music-win.gfs
+        CCLib.gfsAddFile("music-win","music/tech_loop.wav", music_loop)    --Add music file to music-win.gfs
 
-        CCLib.gfs_addfile("stages","stages/cs_anna_killer.lvl", stageslvl)  --Add stage .lvl file to stages.gfs
-        CCLib.gfs_addfile("stages-textures2d","stages/textures/2D/stage_anna_killer.dds", stagestext)   --Add stage .dds (Picture) file to stages-textures2d.gfs
+        CCLib.gfsAddFile("stages","stages/cs_anna_killer.lvl", stageslvl)  --Add stage .lvl file to stages.gfs
+        CCLib.gfsAddFile("stages-textures2d","stages/textures/2D/stage_anna_killer.dds", stagestext)   --Add stage .dds (Picture) file to stages-textures2d.gfs
 
-        CCLib.gfs_extract_file("ui-win", "ui/Win/Charselect.gbs", Charselect_gbs)   --Extract charselect.gbs file from ui-win.gfs
-        CCLib.gbs_merge(Charselect_gbs, Charselect_gbs_merge, Charselect_gbs_path_to_write)     --merge two .gbs files, and write result to Charselect_gbs_path_to_write
-        CCLib.gfs_addfiles("ui-win","", uiwin)  --Add entire folder to ui-win.gfs!
+        CCLib.gfsExtractFile("ui-win", "ui/Win/Charselect.gbs", Charselect_gbs)   --Extract charselect.gbs file from ui-win.gfs
+        CCLib.gbsMerge(Charselect_gbs, Charselect_gbs_merge, Charselect_gbs_path_to_write)     --merge two .gbs files, and write result to Charselect_gbs_path_to_write
+        CCLib.gfsAddFiles("ui-win","", uiwin)  --Add entire folder to ui-win.gfs!
+
+        CCLib.gfsCommitChanges()
+
+        CCLib.addLocalization("Filia_Pal1", "Anna Killer") --adding localizathion in all *_loc.json files
+        CCLib.addNewPermission("Filia_Pal1")  --Writing new permission (line) in FULL_SGCC.sal
+
+        os.remove(Stagesinifile)
+        os.remove(Charselect_gbs)   --We delete temp files, if they exisist after install
         print("[Lua] Anna_Killer install goodbye!")
     end;
     update = function ()    --What CC will do, when updating the mod (Mod Version in lua, higher then in savefile)
         Mod.install()   --We don't think about updates, so... just reinstall.
     end;
-    init = function ()              --What CC will do, when initiating the mod (Executed once, BEFORE game in launched)
-        print("[Lua] init hello!")
-        local i = CCLib.GetWorkingDirectory()
-        local Stagesinifile = i .. "\\mods\\Anna_Killer\\stages.ini"
-        local Charselect_gbs = i .. "\\mods\\Anna_Killer\\Charselect.gbs"
-        os.remove(Stagesinifile)
-        os.remove(Charselect_gbs) --We delete temp files, if they exisist after install
-    end;
+    -- init = function ()              --What CC will do, when initiating the mod (Executed once, BEFORE game in launched)
+    --     print("[Lua] init hello!")
+    -- end;
     -- launch = function ()            --What CC will do, when Skullgirls is already launched (Executed once, AFTER the game is launched)
     --     print("[Lua] launch hello!")
     -- end;
