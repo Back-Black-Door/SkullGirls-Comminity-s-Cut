@@ -5,6 +5,7 @@
 #include "../process/Patching.h"
 #include "../process/process.h"
 #include "../modslualib.h"
+#include "../dll_proxy/Hook.h"
 
 bool ApplyGamePatches();
 bool ExecuteModLaunch();
@@ -13,7 +14,7 @@ bool ExecuteModLoop();
 
 DWORD IsolatedThread::Run() {
     Console::DLL_DebugWriteOutput("IsolatedThread started\n");
-    
+
     while (!GetCurrentProcessInfo());
     Console::DLL_WriteOutput("Read process info!");
 
@@ -28,7 +29,7 @@ DWORD IsolatedThread::Run() {
         if (WaitForSingleObject(m_hStopEvent, 10) == WAIT_OBJECT_0) {
             break;
         }
-        //ExecuteModLoop();
+        ExecuteModLoop();
 
 
         Sleep(1000);

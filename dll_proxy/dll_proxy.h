@@ -1,8 +1,8 @@
 #pragma once
 #include <Windows.h>
 #include <memory>
-#include <d3d9.h>
+
+extern FARPROC PROXY_FUNC_ADRESS[33]; //Need extern this for using in another .cpp file (See Thread.cpp)
 
 bool DLL_PROXY_LOAD();
-
-extern WNDPROC OriginalWndProc;
+void DLL_PROXY_UNLOAD();

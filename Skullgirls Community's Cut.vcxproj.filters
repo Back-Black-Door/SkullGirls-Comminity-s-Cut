@@ -96,6 +96,9 @@
     <ClCompile Include="Overlay\Overlay.cpp">
       <Filter>Overlay</Filter>
     </ClCompile>
+    <ClCompile Include="Overlay\d3d9Wrapper.cpp">
+      <Filter>Overlay</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="dll_proxy\dll_proxy.def">
@@ -182,6 +185,9 @@
       <Filter>include\imgui</Filter>
     </ClInclude>
     <ClInclude Include="Overlay\Overlay.h">
+      <Filter>Overlay</Filter>
+    </ClInclude>
+    <ClInclude Include="Overlay\d3d9Wrapper.h">
       <Filter>Overlay</Filter>
     </ClInclude>
   </ItemGroup>

@@ -9,7 +9,7 @@
 
 #include "../Console.h"
 #include "Overlay.h"
-#include "../dll_proxy/dll_proxy.h"
+#include "d3d9Wrapper.h"
 #include "../modslualib.h"
 
 namespace imgui_show {

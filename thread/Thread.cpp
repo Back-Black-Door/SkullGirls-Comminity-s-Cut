@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "Thread.h"
+#include "../dll_proxy/dll_proxy.h"
 #include "../Console.h"
 
 // Глобальный экземпляр
@@ -89,4 +90,24 @@ bool IsolatedThread::IsOurThread() const {
 
     LPVOID value = TlsGetValue(m_tlsIndex);
     return (value != NULL) && (value != (LPVOID)0xDEADBEEF); // Добавляем проверку на специальное значение
+}
+
+extern "C" __declspec(naked) void __stdcall ProxyFunction_ThreadStart()
+{
+    __asm {
+        // Сохраняем все регистры
+        pushad
+        pushfd
+    }
+
+    g_workerThread.Start();
+
+    __asm {
+        // Восстанавливаем регистры
+        popfd
+        popad
+
+        // Переходим к оригинальной функции
+        jmp[PROXY_FUNC_ADRESS + 10 * 4]
+    }
 }

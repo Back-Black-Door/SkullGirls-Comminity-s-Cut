@@ -69,20 +69,20 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\..\..\..\..\..\Program Files %28x86%29\Steam\steamapps\common\Skullgirls</OutDir>
-    <TargetName>d3d9</TargetName>
+    <TargetName>CoreMessaging</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>d3d9</TargetName>
+    <TargetName>CoreMessaging</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>d3d9</TargetName>
+    <TargetName>CoreMessaging</TargetName>
     <OutDir>..\..\..\..\..\..\Program Files %28x86%29\Steam\steamapps\common\Skullgirls</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>d3d9</TargetName>
+    <TargetName>CoreMessaging</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -156,6 +156,7 @@
     <ClCompile Include="include\imgui\imgui_tables.cpp" />
     <ClCompile Include="include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="modslualib.cpp" />
+    <ClCompile Include="Overlay\d3d9Wrapper.cpp" />
     <ClCompile Include="Overlay\Overlay.cpp" />
     <ClCompile Include="process\Patching.cpp" />
     <ClCompile Include="process\process.cpp" />
@@ -191,6 +192,7 @@
     <ClInclude Include="include\imgui\imstb_textedit.h" />
     <ClInclude Include="include\imgui\imstb_truetype.h" />
     <ClInclude Include="modslualib.h" />
+    <ClInclude Include="Overlay\d3d9Wrapper.h" />
     <ClInclude Include="Overlay\Overlay.h" />
     <ClInclude Include="process\Patching.h" />
     <ClInclude Include="process\process.h" />

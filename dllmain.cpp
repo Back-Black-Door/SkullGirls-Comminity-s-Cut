@@ -18,6 +18,7 @@ using json = nlohmann::json;
 #include "Console.h"
 #include "modslualib.h"
 #include "process/process.h"
+#include "Overlay/d3d9Wrapper.h"
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -40,7 +41,7 @@ bool HandleProcessAttach(HMODULE hModule) {
         OutputDebugString("We can't load DLL!");
     }
     if (!InitializeHook()) {
-        OutputDebugString("We can't hook \"ExitProcess\"!");
+        Console::DLL_DebugWriteOutput("We can't hook \"ExitProcess\"!");
     };
     if (!Console::InitializeConsole()) {
         OutputDebugString("We can't init Console!");
@@ -65,7 +66,7 @@ bool HandleProcessAttach(HMODULE hModule) {
   \____|  \__,_|  \__|                                                                 
                               
 )");
-    Console::DLL_WriteOutput("\nAuthor: ImpDi\nVersion: DLL\n");
+    Console::DLL_WriteOutput("\nAuthor: ImpDi\nVersion: DLL2\n");
     if (!ReadMainArgs()) {
         OutputDebugString("We can't read args!");
     };
@@ -416,7 +417,7 @@ void AddLoc() {
 
         localization.add_files(main_paths::loc_files_path, "core/localization", true);
         localization.commit_changes();
-        //fs::remove_all(main_paths::loc_files_path);
+        fs::remove_all(main_paths::loc_files_path);
     }
     catch (const std::exception& e) {
         std::cerr << "Error working with GFS file: " << e.what() << std::endl;
