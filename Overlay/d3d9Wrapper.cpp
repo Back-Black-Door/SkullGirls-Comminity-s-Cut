@@ -91,7 +91,6 @@ HRESULT STDMETHODCALLTYPE Hooked_CreateDevice(IDirect3D9* pD3D, UINT Adapter, D3
     // Вызываем оригинальный CreateDevice
     HRESULT hr = OriginalCreateDevice(pD3D, Adapter, DeviceType, hFocusWindow, BehaviorFlags,
         pPresentationParameters, ppReturnedDeviceInterface);
-    g_workerThread.Start();
     if (SUCCEEDED(hr))
     {
         // Сохраняем handle окна

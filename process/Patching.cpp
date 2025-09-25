@@ -113,24 +113,6 @@ namespace PachingUtils {
         std::cout << GetLastError() << std::endl;
         return true;
     }
-
-    const void Debugger(DEBUG_EVENT& DebugEv, const HANDLE& ThreadHande, const HANDLE& ProcessHandle) {
-        WaitForDebugEvent(&DebugEv, INFINITE);
-        switch (DebugEv.dwDebugEventCode) {
-        case OUTPUT_DEBUG_STRING_EVENT:
-
-            BYTE* pBuffer = (BYTE*)malloc(DebugEv.u.DebugString.nDebugStringLength);
-            SIZE_T bytesRead;
-
-            ReadProcessMemory(ProcessHandle, DebugEv.u.DebugString.lpDebugStringData, pBuffer, DebugEv.u.DebugString.nDebugStringLength, &bytesRead);
-            //ClearScreen(COORD{ 0,15 });
-            std::cout << "Debug Output: " << pBuffer << std::endl;
-            free(pBuffer);
-            break;
-        }
-        ContinueDebugEvent(DebugEv.dwProcessId, DebugEv.dwThreadId, DBG_CONTINUE);
-    }
-
     const bool ChangeSal(const HANDLE& ThreadHande, const HANDLE& ProcessHandle, const DWORD BaseAdress) {
         char OldString[sizeof(config::SAL_FILE_NAME)]{ NULL };
 

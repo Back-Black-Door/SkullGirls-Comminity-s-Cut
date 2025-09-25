@@ -1,4 +1,5 @@
 #include <functional>
+#include <iostream>
 
 #include "Thread.h"
 #include "../Console.h"
@@ -6,13 +7,19 @@
 #include "../process/process.h"
 #include "../modslualib.h"
 #include "../dll_proxy/Hook.h"
+#include "../dll_proxy/dll_proxy.h"
+#include "../dllmain.h"
+
 
 bool ApplyGamePatches();
 bool ExecuteModLaunch();
 bool ExecuteModDeinit();
 bool ExecuteModLoop();
+DWORD PatchAndMods(IsolatedThread* thread);
 
-DWORD IsolatedThread::Run() {
+IsolatedThread ThreadPatchAndMods(PatchAndMods);
+
+DWORD PatchAndMods(IsolatedThread* thread) {
     Console::DLL_DebugWriteOutput("IsolatedThread started\n");
 
     while (!GetCurrentProcessInfo());
@@ -21,17 +28,12 @@ DWORD IsolatedThread::Run() {
     while (!ApplyGamePatches());
     Console::DLL_WriteOutput("Apply games patch!");
 
+
     while (!ExecuteModLaunch());
     Console::DLL_WriteOutput("Execute Mod Launch completed successfully\n");
 
-    while (m_running.load()) {
-        // Проверяем событие остановки каждые 10 мс
-        if (WaitForSingleObject(m_hStopEvent, 10) == WAIT_OBJECT_0) {
-            break;
-        }
+    while (!thread->ShouldStop()) {
         ExecuteModLoop();
-
-
         Sleep(1000);
     }
     while (!ExecuteModDeinit());
@@ -100,9 +102,6 @@ bool ExecuteModLoop()
 {
 
     for (size_t i = 0; i < mods.size(); ++i) {
-        Console::DLL_DebugWriteOutput(("Processing mod " + std::to_string(i) + ": " +
-            mods[i]->ModInfo.modName + "\n").c_str());
-
         try {
             mods[i]->loop();
         }
@@ -112,4 +111,24 @@ bool ExecuteModLoop()
     }
 
     return true;
+}
+
+extern "C" __declspec(naked) void __stdcall ProxyFunction_ThreadStart()
+{
+    __asm {
+        // Сохраняем все регистры
+        pushad
+        pushfd
+    }
+
+    ThreadPatchAndMods.Start();
+
+    __asm {
+        // Восстанавливаем регистры
+        popfd
+        popad
+
+        // Переходим к оригинальной функции
+        jmp[PROXY_FUNC_ADRESS + 10 * 4]
+    }
 }

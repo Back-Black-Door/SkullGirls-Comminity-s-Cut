@@ -40,9 +40,6 @@ bool HandleProcessAttach(HMODULE hModule) {
     if (!DLL_PROXY_LOAD()) {
         OutputDebugString("We can't load DLL!");
     }
-    if (!InitializeHook()) {
-        Console::DLL_DebugWriteOutput("We can't hook \"ExitProcess\"!");
-    };
     if (!Console::InitializeConsole()) {
         OutputDebugString("We can't init Console!");
     };
@@ -81,6 +78,9 @@ bool HandleProcessAttach(HMODULE hModule) {
         Console::CleanupConsole();
         return TRUE;
     }
+    if (!InitializeHook()) {
+        Console::DLL_DebugWriteOutput("We can't hook \"ExitProcess\"!");
+    };
     json savedata;
     if (!InitializePaths(savedata)) {
         OutputDebugString("We can't init path!");
@@ -145,6 +145,7 @@ bool ReadMainArgs() {
 #endif // DEBUG 
         if ((wcscmp(argv[i], L"-logtoconsole")) == 0) {
             config::DEBUG_ON = true;
+            
         }
         if ((wcscmp(argv[i], L"-reinstall")) == 0) {
             config::REINSTALL_ALL = true;
