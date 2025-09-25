@@ -96,6 +96,8 @@
       <SubSystem>Windows</SubSystem>
       <ModuleDefinitionFile>$(ProjectDir)dll_proxy\dll_proxy.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(ProjectDir)lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <UACUIAccess>true</UACUIAccess>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
