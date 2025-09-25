@@ -7,3 +7,6 @@ inline struct ProcessInfo {
 } SGProccesInfo;
 
 bool GetCurrentProcessInfo();
+
+const DWORD getppid();
+const BOOL PidNameTest(DWORD processId, const std::string& moduleName);

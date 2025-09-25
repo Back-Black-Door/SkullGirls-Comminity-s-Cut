@@ -72,48 +72,53 @@ namespace Overlay {
             }
             if (ImGui::BeginTabItem("Mods")) {
                 static int selected = 0;
-                {
-                    ImGui::BeginChild("left pane", ImVec2(150, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
-                    for (size_t i = 0; i < mods.size(); ++i) 
+                if (mods.size() != 0) {
                     {
-                        char label[128];
-                        sprintf(label, mods[i]->ModInfo.modName.c_str(), i);
-                        if (ImGui::Selectable(label, selected == i, ImGuiSelectableFlags_SelectOnNav))
-                            selected = i;
+                        ImGui::BeginChild("left pane", ImVec2(150, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
+                        for (size_t i = 0; i < mods.size(); ++i)
+                        {
+                            char label[128];
+                            sprintf(label, mods[i]->ModInfo.modName.c_str(), i);
+                            if (ImGui::Selectable(label, selected == i, ImGuiSelectableFlags_SelectOnNav))
+                                selected = i;
+                        }
+                        ImGui::EndChild();
                     }
-                    ImGui::EndChild();
-                }
-                ImGui::SameLine();
+                    ImGui::SameLine();
 
-                // Right
-                {
-                    ImGui::BeginGroup();
-                    ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
-                    ImGui::Text(mods[selected]->ModInfo.modName.c_str(), selected);
-                    ImGui::Separator();
-                    if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None))
+                    // Right
                     {
-                        if (ImGui::BeginTabItem("Description"))
+                        ImGui::BeginGroup();
+                        ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
+                        ImGui::Text(mods[selected]->ModInfo.modName.c_str(), selected);
+                        ImGui::Separator();
+                        if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None))
                         {
-                            ImGui::TextWrapped(mods[selected]->ModInfo.modDesc.c_str());
-                            ImGui::EndTabItem();
+                            if (ImGui::BeginTabItem("Description"))
+                            {
+                                ImGui::TextWrapped(mods[selected]->ModInfo.modDesc.c_str());
+                                ImGui::EndTabItem();
+                            }
+                            if (ImGui::BeginTabItem("Details"))
+                            {
+                                std::string IM_ModName = "Mod Name: " + mods[selected]->ModInfo.modName;
+                                std::string IM_ModAuthor = "Mod Author: " + mods[selected]->ModInfo.modAuthor;
+                                std::string IM_ModVersion = "Mod Version: " + std::to_string(mods[selected]->ModInfo.modVersion);
+                                std::string IM_ModPath = "Mod Path: " + mods[selected]->ModInfo.modPath.string();
+                                ImGui::Text(IM_ModName.c_str());
+                                ImGui::Text(IM_ModAuthor.c_str());
+                                ImGui::Text(IM_ModVersion.c_str());
+                                ImGui::Text(IM_ModPath.c_str());
+                                ImGui::EndTabItem();
+                            }
+                            ImGui::EndTabBar();
                         }
-                        if (ImGui::BeginTabItem("Details"))
-                        {
-                            std::string IM_ModName = "Mod Name: " + mods[selected]->ModInfo.modName;
-                            std::string IM_ModAuthor = "Mod Author: " + mods[selected]->ModInfo.modAuthor;
-                            std::string IM_ModVersion = "Mod Version: " + std::to_string(mods[selected]->ModInfo.modVersion);
-                            std::string IM_ModPath = "Mod Path: " + mods[selected]->ModInfo.modPath.string();
-                            ImGui::Text(IM_ModName.c_str());
-                            ImGui::Text(IM_ModAuthor.c_str());
-                            ImGui::Text(IM_ModVersion.c_str());
-                            ImGui::Text(IM_ModPath.c_str());
-                            ImGui::EndTabItem();
-                        }
-                        ImGui::EndTabBar();
+                        ImGui::EndChild();
+                        ImGui::EndGroup();
                     }
-                    ImGui::EndChild();
-                    ImGui::EndGroup();
+                }
+                else {
+                    ImGui::Text("We don't have any mods!");
                 }
                 ImGui::EndTabItem();
             }

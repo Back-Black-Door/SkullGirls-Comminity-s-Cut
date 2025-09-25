@@ -70,6 +70,13 @@ bool HandleProcessAttach(HMODULE hModule) {
     if (!ReadMainArgs()) {
         OutputDebugString("We can't read args!");
     };
+    if (!fs::exists(main_paths::work_dir_path + "\steam_appid.txt")) {
+        if (!PidNameTest(getppid(), "steam.exe")) {
+            Console::DLL_WriteOutput("We are not child of steam");
+            system(config::SteamLunchName.c_str());
+            return 0;
+        }
+    }
     if (config::LAUNCH_ORIGINAL_GAME) {
         Console::CleanupConsole();
         return TRUE;
@@ -144,6 +151,13 @@ bool ReadMainArgs() {
         }
         if ((wcscmp(argv[i], L"-originalgame")) == 0) {
             config::LAUNCH_ORIGINAL_GAME = true;
+        }
+        int bufferSize = WideCharToMultiByte(CP_UTF8, 0, argv[i], -1, NULL, 0, NULL, NULL);
+        if (bufferSize > 0) {
+            std::vector<char> buffer(bufferSize);
+            WideCharToMultiByte(CP_UTF8, 0, argv[i], -1, buffer.data(), bufferSize, NULL, NULL);
+            config::SteamLunchName += std::string(buffer.data());
+            config::SteamLunchName += "%20";
         }
     }
     LocalFree(argv);
