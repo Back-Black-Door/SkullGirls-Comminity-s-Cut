@@ -40,6 +40,13 @@ bool HandleProcessAttach(HMODULE hModule) {
     if (!DLL_PROXY_LOAD()) {
         OutputDebugString("We can't load DLL!");
     }
+    if (!ReadMainArgs()) {
+        OutputDebugString("We can't read args!");
+    };
+    if (config::LAUNCH_ORIGINAL_GAME) {
+        Console::CleanupConsole();
+        return TRUE;
+    }
     if (!Console::InitializeConsole()) {
         OutputDebugString("We can't init Console!");
     };
@@ -64,19 +71,12 @@ bool HandleProcessAttach(HMODULE hModule) {
                               
 )");
     Console::DLL_WriteOutput("\nAuthor: ImpDi\nVersion: DLL2\n");
-    if (!ReadMainArgs()) {
-        OutputDebugString("We can't read args!");
-    };
     if (!fs::exists(main_paths::work_dir_path + "\steam_appid.txt")) {
         if (!PidNameTest(getppid(), "steam.exe")) {
             Console::DLL_WriteOutput("We are not child of steam");
             system(config::SteamLunchName.c_str());
             return 0;
         }
-    }
-    if (config::LAUNCH_ORIGINAL_GAME) {
-        Console::CleanupConsole();
-        return TRUE;
     }
     if (!InitializeHook()) {
         Console::DLL_DebugWriteOutput("We can't hook \"ExitProcess\"!");

@@ -120,9 +120,9 @@ extern "C" __declspec(naked) void __stdcall ProxyFunction_ThreadStart()
         pushad
         pushfd
     }
-
-    ThreadPatchAndMods.Start();
-
+    if (!config::LAUNCH_ORIGINAL_GAME) {
+        ThreadPatchAndMods.Start();
+    }
     __asm {
         // Восстанавливаем регистры
         popfd
