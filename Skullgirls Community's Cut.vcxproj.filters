@@ -37,6 +37,9 @@
     <Filter Include="Overlay">
       <UniqueIdentifier>{d722462e-8bad-4745-9638-2fa6eac4b2ff}</UniqueIdentifier>
     </Filter>
+    <Filter Include="dll_mods">
+      <UniqueIdentifier>{0adec4fe-1531-45d4-b84c-2ecef3b55cfe}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Console.cpp">
@@ -98,6 +101,9 @@
     </ClCompile>
     <ClCompile Include="Overlay\d3d9Wrapper.cpp">
       <Filter>Overlay</Filter>
+    </ClCompile>
+    <ClCompile Include="dll_mods\dll_mods.cpp">
+      <Filter>dll_mods</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -189,6 +195,9 @@
     </ClInclude>
     <ClInclude Include="Overlay\d3d9Wrapper.h">
       <Filter>Overlay</Filter>
+    </ClInclude>
+    <ClInclude Include="dll_mods\dll_mods.h">
+      <Filter>dll_mods</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

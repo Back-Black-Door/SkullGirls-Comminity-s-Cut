@@ -19,6 +19,7 @@ using json = nlohmann::json;
 #include "modslualib.h"
 #include "process/process.h"
 #include "Overlay/d3d9Wrapper.h"
+#include "dll_mods/dll_mods.h"
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -112,9 +113,10 @@ bool HandleProcessDetach(HMODULE hModule) {
 
     SGProccesInfo.CloseHandles();
     Console::DLL_DebugWriteOutput("SGProccesInfo.CloseHandles()!\n", FOREGROUND_GREEN);
-
     mods.clear();
     Console::DLL_DebugWriteOutput("mods.clear()!\n", FOREGROUND_GREEN);
+    dll_mods.clear();
+    Console::DLL_DebugWriteOutput("dll_mods.clear()!\n", FOREGROUND_GREEN);
 #ifdef _DEBUG
     Console::DLL_WriteOutput("Goodbye!\n", FOREGROUND_BLUE);
     system("pause");
@@ -234,9 +236,18 @@ bool InitializeMods(json& savedata)
         mods.reserve(mods.size() + count);
 
         for (const auto& entry : fs::directory_iterator(main_paths::mods_dir_path)) {
-            if (entry.path().extension() == ".lua") {
+            try {
+                if (entry.path().extension() == ".lua") {
 
-                ProcessModFile(entry, savedata);
+                    mods.emplace_back(std::make_unique<Mod>(entry.path().string()));
+                }
+                if (entry.path().extension() == ".dll") {
+                    dll_mods.emplace_back(std::make_unique<dll_mod>(entry.path().string()));
+                }
+            }
+            catch (const std::exception& e) {
+                std::string errorMessage = "Mod creation error: " + std::string(e.what()) + "\n";
+                Console::DLL_WriteOutput(errorMessage.c_str(), FOREGROUND_RED);
             }
         }
         for (auto &mod : mods) {
@@ -251,18 +262,6 @@ bool InitializeMods(json& savedata)
     return true;
 }
 
-// Process Mod File
-void ProcessModFile(const fs::directory_entry& entry, json& savedata)
-{
-    try {
-        // Create Mod object
-        mods.emplace_back(std::make_unique<Mod>(entry.path().string()));
-    }
-    catch (const std::exception& e) {
-        std::string errorMessage = "Mod creation error: " + std::string(e.what()) + "\n";
-        Console::DLL_WriteOutput(errorMessage.c_str(), FOREGROUND_RED);
-    }
-}
 
 // Control Mod Version
 void ManageModLifecycle(Mod& mod, json& savedata)

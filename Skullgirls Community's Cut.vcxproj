@@ -146,6 +146,7 @@
   <ItemGroup>
     <ClCompile Include="Console.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="dll_mods\dll_mods.cpp" />
     <ClCompile Include="dll_proxy\dll_proxy.cpp" />
     <ClCompile Include="dll_proxy\Hook.cpp" />
     <ClCompile Include="formats\gbs.cpp" />
@@ -180,6 +181,7 @@
   <ItemGroup>
     <ClInclude Include="Console.h" />
     <ClInclude Include="dllmain.h" />
+    <ClInclude Include="dll_mods\dll_mods.h" />
     <ClInclude Include="dll_proxy\dll_proxy.h" />
     <ClInclude Include="dll_proxy\Hook.h" />
     <ClInclude Include="formats\gbs.h" />

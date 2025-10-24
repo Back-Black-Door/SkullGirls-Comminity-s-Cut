@@ -20,7 +20,7 @@ bool DLL_PROXY_LOAD() {
 
     // Получаем путь к SysWOW64 директории
     if (GetSystemWow64DirectoryA(system_Path, MAX_PATH) == 0) { //For 64-bit
-        strcpy_s(system_Path, "C:\\Windows\\System32"); //For 32-bit
+        GetSystemDirectoryA(system_Path, MAX_PATH);
     }
 
     // Формируем полный путь к библиотеке

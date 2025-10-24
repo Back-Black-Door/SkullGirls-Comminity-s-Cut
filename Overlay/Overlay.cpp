@@ -11,12 +11,15 @@
 #include "Overlay.h"
 #include "d3d9Wrapper.h"
 #include "../modslualib.h"
+#include "../dll_mods/dll_mods.h"
 
 namespace imgui_show {
     bool Show_Window = false;
     bool Show_Debug = false;
     bool Show_imgui_demo = false;
 }
+
+
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -122,11 +125,70 @@ namespace Overlay {
                 }
                 ImGui::EndTabItem();
             }
+            if (dll_mods.size() != 0) {
+                if (ImGui::BeginTabItem("DLL_Mods")) {
+                    static int selected = 0;
+                        {
+                            ImGui::BeginChild("left pane", ImVec2(150, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
+                            for (size_t i = 0; i < dll_mods.size(); ++i)
+                            {
+                                char label[128];
+                                sprintf(label, dll_mods[i]->ModInfo.modName.c_str(), i);
+                                if (ImGui::Selectable(label, selected == i, ImGuiSelectableFlags_SelectOnNav))
+                                    selected = i;
+                            }
+                            ImGui::EndChild();
+                        }
+                        ImGui::SameLine();
+
+                        // Right
+                        {
+                            ImGui::BeginGroup();
+                            ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
+                            ImGui::Text(dll_mods[selected]->ModInfo.modName.c_str(), selected);
+                            ImGui::Separator();
+                            if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None))
+                            {
+                                if (ImGui::BeginTabItem("Description"))
+                                {
+                                    ImGui::TextWrapped(dll_mods[selected]->ModInfo.modDesc.c_str());
+                                    ImGui::EndTabItem();
+                                }
+                                if (ImGui::BeginTabItem("Details"))
+                                {
+                                    std::string IM_ModName = "Mod Name: " + dll_mods[selected]->ModInfo.modName;
+                                    std::string IM_ModAuthor = "Mod Author: " + dll_mods[selected]->ModInfo.modAuthor;
+                                    std::string IM_ModVersion = "Mod Version: " + dll_mods[selected]->ModInfo.modVersion;
+                                    std::string IM_ModPath = "Mod Path: " + dll_mods[selected]->ModInfo.modPath.string();
+                                    ImGui::Text(IM_ModName.c_str());
+                                    ImGui::Text(IM_ModAuthor.c_str());
+                                    ImGui::Text(IM_ModVersion.c_str());
+                                    ImGui::Text(IM_ModPath.c_str());
+                                    ImGui::EndTabItem();
+                                }
+                                ImGui::EndTabBar();
+                            }
+                            ImGui::EndChild();
+                            ImGui::EndGroup();
+                        }            
+                    ImGui::EndTabItem();
+                }
+            }
             if (ImGui::BeginTabItem("Settings")) {
                 ImGui::Text("Test!");
                 //ImGui::Checkbox("Debug On", &imgui_show::Show_Debug);
                 ImGui::Checkbox("Console Show", &Console::Show_Console);
                 ImGui::EndTabItem();
+            }
+            if (dll_mods.size() != 0) {
+                for (size_t i = 0; i < dll_mods.size(); ++i) {
+                    try {
+                        dll_mods[i]->DLL_UI(ImGui::GetCurrentContext());
+                    }
+                    catch (const std::exception& e) {
+                        Console::DLL_WriteOutput(("Error in dll_mod UI: " + std::string(e.what()) + "\n").c_str(), FOREGROUND_RED);
+                    }
+                }
             }
             if (imgui_show::Show_Debug) {
                 if (ImGui::BeginTabItem("Debug")) {
@@ -155,11 +217,12 @@ namespace Overlay {
             }
             if (Console::Show_Console) { Console::ShowConsole(); }
             if (!Console::Show_Console) { Console::HideConsole(); }
-            ImGui::End();
-            ImGui::EndFrame();
-            ImGui::Render();
-            ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+                ImGui::End();
+                ImGui::EndFrame();
+                ImGui::Render();
+                ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+            }
         }
     }
-}
+
 
