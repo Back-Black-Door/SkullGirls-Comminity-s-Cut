@@ -1,4 +1,5 @@
-#include "pch.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include "hello_world.h"
 
 BOOL APIENTRY DllMain(HMODULE hModule,
@@ -9,12 +10,12 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
-        // Мод загружен
+		// Mod loaded
         break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:
-        // Мод выгружается
+		// Mod unloaded
         break;
     }
     return TRUE;
