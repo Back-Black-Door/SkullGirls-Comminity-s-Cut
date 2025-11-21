@@ -1,27 +1,23 @@
 #include "hello_world.h"
-#include <cstdlib>
-
-// Memory allocation functions that use the CRT from this DLL
-static void* ImGuiAllocWrapper(size_t size, void* user_data) {
-    (void)user_data;
-    return malloc(size);
-}
-
-static void ImGuiFreeWrapper(void* ptr, void* user_data) {
-    (void)user_data;
-    free(ptr);
-}
+#include <iostream>
 
 void UI(ImGuiContext* context) {
-    // Step 1: Set context
+    // Set the ImGui context from the modloader
     ImGui::SetCurrentContext(context);
 
-    // Step 2: Set allocator functions
-    ImGui::SetAllocatorFunctions(ImGuiAllocWrapper, ImGuiFreeWrapper, nullptr);
+	// Create custom tab for the mod content
+    if (ImGui::BeginTabItem("Hello World tab")) {
+        ImGui::Text("Hello from Hello World mod!");
 
-    // Step 3: Empty window works, but content causes crash
-	if (ImGui::Begin("Hello World Mod")) {
-        // TODO: Add content here
+        // Button with counter and logging
+        static int counter = 0;
+        if (ImGui::Button("Click me!")) {
+            counter++;
+            std::cout << "[HelloWorld Mod] Button clicked! Counter: " << counter << std::endl;
+        }
+        ImGui::SameLine();
+        ImGui::Text("Counter = %d", counter);
+
+        ImGui::EndTabItem();
     }
-    ImGui::End();
 }
