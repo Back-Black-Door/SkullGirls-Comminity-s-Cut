@@ -33,3 +33,14 @@ Documentation is in the [CClib.md](docs/CClib.md)
 For more information, join our [Discord](https://discord.gg/4ufGJQjkpc)
 
 Maybe you want to ask _ImpDi_ for something? :^)
+
+### Building tips:
+The default output path for the SGCC dll is set in `DefaultSettings.props`. To use a custom output path (e.g., your Skullgirls game folder), create a `LocalOverrides.props` file:
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <OutDir>$(SystemDrive)\SteamLibrary\steamapps\common\Skullgirls</OutDir>
+  </PropertyGroup>
+</Project>
+```
