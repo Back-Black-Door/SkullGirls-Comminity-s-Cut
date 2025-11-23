@@ -7,4 +7,7 @@
 todo.md
 lualibideas.md
 /docs/.obsidian
-/SkullGir
+/SkullGir.*
+*.user
+*.user.props
+LocalOverrides.props
