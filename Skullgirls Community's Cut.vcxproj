@@ -145,8 +145,7 @@
   </ItemGroup>
   <!-- Custom build settings -->
   <Import Project="$(SolutionDir)DefaultSettings.props" />
-  <Import Project="$(SolutionDir)LocalOverrides.props" 
-          Condition="Exists('$(SolutionDir)LocalOverrides.props')" />
+  <Import Project="$(SolutionDir)LocalOverrides.props" Condition="Exists('$(SolutionDir)LocalOverrides.props')" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -1,0 +1,9 @@
+/Debug
+/Release
+/.vs
+/crash-dumps
+*.slnLaunch.user
+/HelloWor.*
+*.user
+*.user.props
+LocalOverrides.props
