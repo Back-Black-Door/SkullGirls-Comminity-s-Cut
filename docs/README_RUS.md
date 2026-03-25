@@ -13,7 +13,7 @@ C:\Program Files (x86)\Steam\steamapps\common\Skullgirls\CoreMessaging.dll
 Это только **Мод-Лоудер!**
 
 ### Для игроков:
-Моды доступны [на главной странице](https://github.com/Back-Black-Door)
+Моды доступны [на главной странице](https://github.com/Skullgirls-Communitys-Cut)
 
 ### Для разработчиков модов:
 
