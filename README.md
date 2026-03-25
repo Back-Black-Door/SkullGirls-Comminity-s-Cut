@@ -25,7 +25,7 @@ Here you can view loaded mods and view the console
 `-logtoconsole` -This isn't a ModLoader launch options, but it forces the game to output its logs to the console. It might be useful for debugging or other purposes.
 
 ### For users:
-Mods are on the [organization main page](https://github.com/Back-Black-Door)
+Mods are on the [organization main page](https://github.com/Skullgirls-Communitys-Cut)
 
 ### For mod developers:
 Documentation is in the [CClib.md](docs/CClib.md)
