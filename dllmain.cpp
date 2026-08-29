@@ -103,7 +103,10 @@ bool HandleProcessAttach(HMODULE hModule) {
             bool launched = false;
             if (!steam.empty()) {
                 std::string line = "\"" + steam + "\" -applaunch " + config::STEAM_APP_ID;
-                if (!config::SteamLunchArgs.empty()) line += " " + config::SteamLunchArgs;
+                // Steam подставляет свои параметры запуска сам, и наши дописались бы
+                // вторым разом. Пригодится для запуска другим способом, например
+                // через steam:// ссылку.
+                //if (!config::SteamLunchArgs.empty()) line += " " + config::SteamLunchArgs;
                 Console::DLL_WriteOutput(("\nAsking Steam: " + line).c_str());
                 OutputDebugStringA(line.c_str());
                 std::vector<char> mutableLine(line.begin(), line.end());
@@ -306,7 +309,19 @@ bool InitializeMods(json& savedata)
             }
         }
         for (auto &mod : mods) {
-            ManageModLifecycle(*mod, savedata);
+            try {
+                ManageModLifecycle(*mod, savedata);
+            }
+            catch (const std::exception& e) {
+                // Один неполный мод не должен отменять запись остальных: раньше
+                // исключение выходило из всего цикла, и SaveModData не вызывался.
+                std::string message = "Mod \"" + mod->ModInfo.modName
+                    + "\" failed: " + e.what() + "\n";
+                Console::DLL_WriteOutput(message.c_str(), FOREGROUND_RED);
+                OutputDebugStringA(message.c_str());
+                // Незавершённые правки упавшего мода не должны уйти в следующий.
+                GFS_CHANGES.clear();
+            }
         }
         SaveModData(savedata);
     }
@@ -314,6 +329,7 @@ bool InitializeMods(json& savedata)
     {
         std::string errorMessage = "Mod init error: " + std::string(e.what()) + "\n";
         Console::DLL_WriteOutput(errorMessage.c_str(), FOREGROUND_RED);
+        OutputDebugStringA(errorMessage.c_str()); // Консоль может быть не открыта.
         return false;
     }
     return true;
