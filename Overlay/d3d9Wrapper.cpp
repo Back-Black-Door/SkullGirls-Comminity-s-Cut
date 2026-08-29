@@ -29,6 +29,7 @@ CreateDevice_t OriginalCreateDevice = nullptr;
 
 // Для перехвата оконных сообщений
 WNDPROC OriginalWndProc = nullptr;
+ImGuiContext* g_ImGuiContext = nullptr;
 HWND g_hWindow = nullptr;
 
 // Наша обработка оконных сообщений
@@ -103,7 +104,7 @@ HRESULT STDMETHODCALLTYPE Hooked_CreateDevice(IDirect3D9* pD3D, UINT Adapter, D3
         g_hWindow = hFocusWindow;
 
         // Инициализируем ImGui
-        ImGui::CreateContext();
+        g_ImGuiContext = ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
         io.IniFilename = nullptr;

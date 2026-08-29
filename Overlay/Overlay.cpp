@@ -26,6 +26,10 @@ extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam
 namespace Overlay { 
     LRESULT CALLBACK Input(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         {
+            // Контекст у ImGui глобальный, а модов с оверлеем может быть несколько.
+            if (!g_ImGuiContext) return CallWindowProc(OriginalWndProc, hWnd, uMsg, wParam, lParam);
+            ImGui::SetCurrentContext(g_ImGuiContext);
+
             // Всегда передаем сообщения в ImGui для обработки
             ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
 
@@ -53,6 +57,9 @@ namespace Overlay {
             return CallWindowProc(OriginalWndProc, hWnd, uMsg, wParam, lParam);
         }
     void Render() {
+        if (!g_ImGuiContext) return;
+        ImGui::SetCurrentContext(g_ImGuiContext);
+
         if (imgui_show::Show_Window) {
             ImGui_ImplDX9_NewFrame();
             ImGui_ImplWin32_NewFrame();
