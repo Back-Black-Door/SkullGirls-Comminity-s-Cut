@@ -13,6 +13,14 @@ struct HandleDeleter {
 using ScopedModule = std::unique_ptr<std::remove_pointer<HMODULE>::type, HandleDeleter>;
 ScopedModule hL;
 
+FARPROC PROXY_FUNC_ADRESS[33] = { 0 };
+
+// Имена экспортов в том же порядке, что и в dll_proxy.def. Брать их по
+// порядковому номеру вместо имени выглядит равнозначно, но это не так:
+// линковщик раздаёт ординалы по алфавиту, поэтому один добавленный или
+// убранный экспорт в очередной сборке Windows сдвигает все последующие.
+// GetProcAddress при этом отработает успешно и вернёт валидный адрес --
+// чужой функции, -- так что проверка на NULL ниже такое не поймает.
 static const char* const PROXY_FUNC_NAMES[33] = {
     "CoreUICallComputeMaximumMessageSize",
     "CoreUICallCreateConversationHost",
