@@ -81,7 +81,13 @@ bool DLL_PROXY_LOAD() {
     try {
         for (int i = 0; i < 33; i++) {
             PROXY_FUNC_ADRESS[i] = GetProcAddress(tempHandle, PROXY_FUNC_NAMES[i]);
-            if (!PROXY_FUNC_ADRESS[i]) return FALSE;
+            // Набор экспортов меняется между версиями Windows: в Windows 11 нет
+            // CoreUICreateClientWindowIDManager и CoreUICreateSystemWindowIDManager.
+            // Пропускаем недостающие, иначе не поднимается вся прокси.
+            if (!PROXY_FUNC_ADRESS[i]) {
+                OutputDebugStringA((std::string("CoreMessaging.dll has no export ")
+                    + PROXY_FUNC_NAMES[i]).c_str());
+            }
         }
         return true;
     }
