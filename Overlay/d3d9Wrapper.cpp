@@ -96,6 +96,9 @@ HRESULT STDMETHODCALLTYPE Hooked_CreateDevice(IDirect3D9* pD3D, UINT Adapter, D3
         pPresentationParameters, ppReturnedDeviceInterface);
     if (SUCCEEDED(hr))
     {
+        // Устройство могут создать заново, контекст и оконная процедура нужны одни
+        if (OriginalWndProc) return hr;
+
         // Сохраняем handle окна
         g_hWindow = hFocusWindow;
 
