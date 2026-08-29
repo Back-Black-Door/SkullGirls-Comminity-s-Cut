@@ -14,31 +14,31 @@
 
 #pragma comment(lib, "d3d9.lib")
 
-// Указатели на оригинальные функции
+// РЈРєР°Р·Р°С‚РµР»Рё РЅР° РѕСЂРёРіРёРЅР°Р»СЊРЅС‹Рµ С„СѓРЅРєС†РёРё
 static HMODULE originalD3D9 = nullptr;
 
-// Типы для оригинальных функций
+// РўРёРїС‹ РґР»СЏ РѕСЂРёРіРёРЅР°Р»СЊРЅС‹С… С„СѓРЅРєС†РёР№
 typedef HRESULT(STDMETHODCALLTYPE* Present_t)(IDirect3DDevice9*, CONST RECT*, CONST RECT*, HWND, CONST RGNDATA*);
 typedef HRESULT(STDMETHODCALLTYPE* Reset_t)(IDirect3DDevice9*, D3DPRESENT_PARAMETERS*);
 typedef HRESULT(STDMETHODCALLTYPE* CreateDevice_t)(IDirect3D9*, UINT, D3DDEVTYPE, HWND, DWORD, D3DPRESENT_PARAMETERS*, IDirect3DDevice9**);
 
-// Оригинальные функции
+// РћСЂРёРіРёРЅР°Р»СЊРЅС‹Рµ С„СѓРЅРєС†РёРё
 Present_t OriginalPresent = nullptr;
 Reset_t OriginalReset = nullptr;
 CreateDevice_t OriginalCreateDevice = nullptr;
 
-// Для перехвата оконных сообщений
+// Р”Р»СЏ РїРµСЂРµС…РІР°С‚Р° РѕРєРѕРЅРЅС‹С… СЃРѕРѕР±С‰РµРЅРёР№
 WNDPROC OriginalWndProc = nullptr;
 HWND g_hWindow = nullptr;
 
-// Наша обработка оконных сообщений
+// РќР°С€Р° РѕР±СЂР°Р±РѕС‚РєР° РѕРєРѕРЅРЅС‹С… СЃРѕРѕР±С‰РµРЅРёР№
 LRESULT CALLBACK Hooked_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     return Overlay::Input(hWnd, uMsg, wParam, lParam);
 }
 
 
-// Наши функции-перехватчики
+// РќР°С€Рё С„СѓРЅРєС†РёРё-РїРµСЂРµС…РІР°С‚С‡РёРєРё
 HRESULT STDMETHODCALLTYPE Hooked_Present(IDirect3DDevice9* pDevice, CONST RECT* pSourceRect,
     CONST RECT* pDestRect, HWND hDestWindowOverride,
     CONST RGNDATA* pDirtyRegion)
@@ -60,43 +60,43 @@ HRESULT STDMETHODCALLTYPE Hooked_Reset(IDirect3DDevice9* pDevice, D3DPRESENT_PAR
     return hr;
 }
 
-// Функция для перехвата методов устройства
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РїРµСЂРµС…РІР°С‚Р° РјРµС‚РѕРґРѕРІ СѓСЃС‚СЂРѕР№СЃС‚РІР°
 void HookDevice(IDirect3DDevice9* pDevice)
 {
-    // Получаем указатель на таблицу виртуальных методов
+    // РџРѕР»СѓС‡Р°РµРј СѓРєР°Р·Р°С‚РµР»СЊ РЅР° С‚Р°Р±Р»РёС†Сѓ РІРёСЂС‚СѓР°Р»СЊРЅС‹С… РјРµС‚РѕРґРѕРІ
     void** vTable = *((void***)pDevice);
 
-    // Сохраняем оригинальные указатели
-    OriginalPresent = (Present_t)vTable[17]; // Present обычно имеет индекс 17
-    OriginalReset = (Reset_t)vTable[16];     // Reset обычно имеет индекс 16
-    // Меняем защиту памяти для записи
+    // РЎРѕС…СЂР°РЅСЏРµРј РѕСЂРёРіРёРЅР°Р»СЊРЅС‹Рµ СѓРєР°Р·Р°С‚РµР»Рё
+    OriginalPresent = (Present_t)vTable[17]; // Present РѕР±С‹С‡РЅРѕ РёРјРµРµС‚ РёРЅРґРµРєСЃ 17
+    OriginalReset = (Reset_t)vTable[16];     // Reset РѕР±С‹С‡РЅРѕ РёРјРµРµС‚ РёРЅРґРµРєСЃ 16
+    // РњРµРЅСЏРµРј Р·Р°С‰РёС‚Сѓ РїР°РјСЏС‚Рё РґР»СЏ Р·Р°РїРёСЃРё
     DWORD oldProtect;
     VirtualProtect(&vTable[17], sizeof(void*), PAGE_EXECUTE_READWRITE, &oldProtect);
     VirtualProtect(&vTable[16], sizeof(void*), PAGE_EXECUTE_READWRITE, &oldProtect);
 
-    // Заменяем указатели на наши функции
+    // Р—Р°РјРµРЅСЏРµРј СѓРєР°Р·Р°С‚РµР»Рё РЅР° РЅР°С€Рё С„СѓРЅРєС†РёРё
     vTable[17] = (void*)Hooked_Present;
     vTable[16] = (void*)Hooked_Reset;
-    // Восстанавливаем защиту
+    // Р’РѕСЃСЃС‚Р°РЅР°РІР»РёРІР°РµРј Р·Р°С‰РёС‚Сѓ
     VirtualProtect(&vTable[17], sizeof(void*), oldProtect, &oldProtect);
     VirtualProtect(&vTable[16], sizeof(void*), oldProtect, &oldProtect);
 }
 
-// Перехваченный CreateDevice
+// РџРµСЂРµС…РІР°С‡РµРЅРЅС‹Р№ CreateDevice
 HRESULT STDMETHODCALLTYPE Hooked_CreateDevice(IDirect3D9* pD3D, UINT Adapter, D3DDEVTYPE DeviceType,
     HWND hFocusWindow, DWORD BehaviorFlags,
     D3DPRESENT_PARAMETERS* pPresentationParameters,
     IDirect3DDevice9** ppReturnedDeviceInterface)
 {
-    // Вызываем оригинальный CreateDevice
+    // Р’С‹Р·С‹РІР°РµРј РѕСЂРёРіРёРЅР°Р»СЊРЅС‹Р№ CreateDevice
     HRESULT hr = OriginalCreateDevice(pD3D, Adapter, DeviceType, hFocusWindow, BehaviorFlags,
         pPresentationParameters, ppReturnedDeviceInterface);
     if (SUCCEEDED(hr))
     {
-        // Сохраняем handle окна
+        // РЎРѕС…СЂР°РЅСЏРµРј handle РѕРєРЅР°
         g_hWindow = hFocusWindow;
 
-        // Инициализируем ImGui
+        // РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј ImGui
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -105,17 +105,17 @@ HRESULT STDMETHODCALLTYPE Hooked_CreateDevice(IDirect3D9* pD3D, UINT Adapter, D3
         ImGui_ImplWin32_Init(hFocusWindow);
         ImGui_ImplDX9_Init(*ppReturnedDeviceInterface);
 
-        // Перехватываем оконную процедуру
+        // РџРµСЂРµС…РІР°С‚С‹РІР°РµРј РѕРєРѕРЅРЅСѓСЋ РїСЂРѕС†РµРґСѓСЂСѓ
         OriginalWndProc = (WNDPROC)SetWindowLongPtr(hFocusWindow, GWLP_WNDPROC, (LONG_PTR)Hooked_WndProc);
 
-        // Перехватываем методы устройства
+        // РџРµСЂРµС…РІР°С‚С‹РІР°РµРј РјРµС‚РѕРґС‹ СѓСЃС‚СЂРѕР№СЃС‚РІР°
         HookDevice(*ppReturnedDeviceInterface);
     }
 
     return hr;
 }
 
-// Перехваченная Direct3DCreate9
+// РџРµСЂРµС…РІР°С‡РµРЅРЅР°СЏ Direct3DCreate9
 IDirect3D9* WINAPI HookedDirect3DCreate9(UINT SDKVersion)
 {
     std::cout << "Called d3d9!" << "\n";
@@ -124,16 +124,16 @@ IDirect3D9* WINAPI HookedDirect3DCreate9(UINT SDKVersion)
         return nullptr;
     }
 
-    // Создаем оригинальный объект IDirect3D9
+    // РЎРѕР·РґР°РµРј РѕСЂРёРіРёРЅР°Р»СЊРЅС‹Р№ РѕР±СЉРµРєС‚ IDirect3D9
     IDirect3D9* pD3D = originalDirect3DCreate9(SDKVersion);
     if (!pD3D)
         return nullptr;
 
-    // Перехватываем виртуальную таблицу IDirect3D9
+    // РџРµСЂРµС…РІР°С‚С‹РІР°РµРј РІРёСЂС‚СѓР°Р»СЊРЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ IDirect3D9
     void** vTable = *((void***)pD3D);
-    OriginalCreateDevice = (CreateDevice_t)vTable[16]; // CreateDevice имеет индекс 16
+    OriginalCreateDevice = (CreateDevice_t)vTable[16]; // CreateDevice РёРјРµРµС‚ РёРЅРґРµРєСЃ 16
 
-    // Заменяем CreateDevice на наш перехватчик
+    // Р—Р°РјРµРЅСЏРµРј CreateDevice РЅР° РЅР°С€ РїРµСЂРµС…РІР°С‚С‡РёРє
     DWORD oldProtect;
     VirtualProtect(&vTable[16], sizeof(void*), PAGE_EXECUTE_READWRITE, &oldProtect);
     vTable[16] = (void*)Hooked_CreateDevice;
@@ -141,4 +141,5 @@ IDirect3D9* WINAPI HookedDirect3DCreate9(UINT SDKVersion)
 
     return pD3D;
 }
+
 

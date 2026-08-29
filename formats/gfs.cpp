@@ -227,23 +227,23 @@ void GFSEdit::extract_file(const std::string& relative_path_in_archive, const fs
 }
 
 void GFSEdit::extract_files(const fs::path& output_path, const std::string& relative_path_in_archive) {
-    // Нормализуем путь для сравнения: добавляем / в конец если это папка
+    // РќРѕСЂРјР°Р»РёР·СѓРµРј РїСѓС‚СЊ РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ: РґРѕР±Р°РІР»СЏРµРј / РІ РєРѕРЅРµС† РµСЃР»Рё СЌС‚Рѕ РїР°РїРєР°
     std::string search_path = relative_path_in_archive;
     if (!search_path.empty() && search_path.back() != '/') {
         search_path += '/';
     }
 
     for (const auto& meta : files_meta_data) {
-        // Проверяем принадлежность к целевой директории
+        // РџСЂРѕРІРµСЂСЏРµРј РїСЂРёРЅР°РґР»РµР¶РЅРѕСЃС‚СЊ Рє С†РµР»РµРІРѕР№ РґРёСЂРµРєС‚РѕСЂРёРё
         if (search_path.empty() ||
             meta.relative_path == relative_path_in_archive ||
             (meta.relative_path.size() > search_path.size() &&
                 meta.relative_path.substr(0, search_path.size()) == search_path)) {
 
-            // Формируем полный путь для извлечения
+            // Р¤РѕСЂРјРёСЂСѓРµРј РїРѕР»РЅС‹Р№ РїСѓС‚СЊ РґР»СЏ РёР·РІР»РµС‡РµРЅРёСЏ
             fs::path full_output_path = output_path;
             if (!search_path.empty()) {
-                // Убираем префикс родительской директории из пути
+                // РЈР±РёСЂР°РµРј РїСЂРµС„РёРєСЃ СЂРѕРґРёС‚РµР»СЊСЃРєРѕР№ РґРёСЂРµРєС‚РѕСЂРёРё РёР· РїСѓС‚Рё
                 std::string relative_part = meta.relative_path.substr(search_path.size());
                 full_output_path /= relative_part;
             }
@@ -308,7 +308,7 @@ void GFSEdit::commit_changes() {
             if (should_erase) {
                 std::cout << "Delete File (Because of replace):" << gfs_path.filename() << '\n' 
                     << it_files->relative_path << '\n';
-                it_files = files_meta_data.erase(it_files); // erase возвращает следующий валидный итератор
+                it_files = files_meta_data.erase(it_files); // erase РІРѕР·РІСЂР°С‰Р°РµС‚ СЃР»РµРґСѓСЋС‰РёР№ РІР°Р»РёРґРЅС‹Р№ РёС‚РµСЂР°С‚РѕСЂ
             }
             else {
                 append_byteswapped(buffer, uint64_t(it_files->relative_path.size()));
@@ -554,6 +554,7 @@ void GFSPacker::operator()(const std::filesystem::path& filestopackcs) {
     std::fwrite(file_version, 0x3, 1, fGFSMetaInfo);
     std::fwrite(&numbers_of_file, 0x8, 1, fGFSMetaInfo);
 }
+
 
 
 

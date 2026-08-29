@@ -25,7 +25,7 @@ public:
         LeaveCriticalSection(&m_cs);
     }
 
-    // Запрещаем копирование и присваивание
+    // Р—Р°РїСЂРµС‰Р°РµРј РєРѕРїРёСЂРѕРІР°РЅРёРµ Рё РїСЂРёСЃРІР°РёРІР°РЅРёРµ
     CriticalSection(const CriticalSection&) = delete;
     CriticalSection& operator=(const CriticalSection&) = delete;
 
@@ -46,7 +46,7 @@ public:
         m_cs.Unlock();
     }
 
-    // Запрещаем копирование и присваивание
+    // Р—Р°РїСЂРµС‰Р°РµРј РєРѕРїРёСЂРѕРІР°РЅРёРµ Рё РїСЂРёСЃРІР°РёРІР°РЅРёРµ
     ScopedLock(const ScopedLock&) = delete;
     ScopedLock& operator=(const ScopedLock&) = delete;
 

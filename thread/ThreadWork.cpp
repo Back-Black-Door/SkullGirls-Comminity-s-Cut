@@ -116,7 +116,7 @@ bool ExecuteModLoop()
 extern "C" __declspec(naked) void __stdcall ProxyFunction_ThreadStart()
 {
     __asm {
-        // Сохраняем все регистры
+        // РЎРѕС…СЂР°РЅСЏРµРј РІСЃРµ СЂРµРіРёСЃС‚СЂС‹
         pushad
         pushfd
     }
@@ -124,11 +124,11 @@ extern "C" __declspec(naked) void __stdcall ProxyFunction_ThreadStart()
         ThreadPatchAndMods.Start();
     }
     __asm {
-        // Восстанавливаем регистры
+        // Р’РѕСЃСЃС‚Р°РЅР°РІР»РёРІР°РµРј СЂРµРіРёСЃС‚СЂС‹
         popfd
         popad
 
-        // Переходим к оригинальной функции
+        // РџРµСЂРµС…РѕРґРёРј Рє РѕСЂРёРіРёРЅР°Р»СЊРЅРѕР№ С„СѓРЅРєС†РёРё
         jmp[PROXY_FUNC_ADRESS + 10 * 4]
     }
 }

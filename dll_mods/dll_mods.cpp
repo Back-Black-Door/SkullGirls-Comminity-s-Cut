@@ -36,7 +36,7 @@ bool dll_mod::GetDllInfo(const char* dllPath, ModHeader& ModInfo) {
             char* value;
             UINT len;
 
-            // Простой способ - используем первый доступный язык
+            // РџСЂРѕСЃС‚РѕР№ СЃРїРѕСЃРѕР± - РёСЃРїРѕР»СЊР·СѓРµРј РїРµСЂРІС‹Р№ РґРѕСЃС‚СѓРїРЅС‹Р№ СЏР·С‹Рє
             if (VerQueryValue(buffer, "\\StringFileInfo\\040904b0\\FileDescription", (LPVOID*)&value, &len) && len > 0) {
                 ModInfo.modDesc = value;
             }
@@ -57,3 +57,4 @@ bool dll_mod::GetDllInfo(const char* dllPath, ModHeader& ModInfo) {
         return true;
     }
 }
+

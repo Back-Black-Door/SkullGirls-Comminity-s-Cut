@@ -15,7 +15,7 @@ private:
     DWORD Run();
 
 public:
-    // Конструктор принимает функцию, которая получает указатель на этот объект
+    // РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РїСЂРёРЅРёРјР°РµС‚ С„СѓРЅРєС†РёСЋ, РєРѕС‚РѕСЂР°СЏ РїРѕР»СѓС‡Р°РµС‚ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЌС‚РѕС‚ РѕР±СЉРµРєС‚
     explicit IsolatedThread(std::function<DWORD(IsolatedThread*)> task);
     ~IsolatedThread();
 
@@ -24,17 +24,17 @@ public:
     bool IsOurThread() const;
     bool IsRunning() const { return m_running.load(); }
 
-    // Метод для проверки флага остановки
+    // РњРµС‚РѕРґ РґР»СЏ РїСЂРѕРІРµСЂРєРё С„Р»Р°РіР° РѕСЃС‚Р°РЅРѕРІРєРё
     bool ShouldStop(DWORD timeoutMs = 0) const {
         return WaitForSingleObject(m_hStopEvent, timeoutMs) == WAIT_OBJECT_0;
     }
 
-    // Метод для ожидания с проверкой остановки
+    // РњРµС‚РѕРґ РґР»СЏ РѕР¶РёРґР°РЅРёСЏ СЃ РїСЂРѕРІРµСЂРєРѕР№ РѕСЃС‚Р°РЅРѕРІРєРё
     bool SleepWithStopCheck(DWORD milliseconds) const {
         return WaitForSingleObject(m_hStopEvent, milliseconds) == WAIT_TIMEOUT;
     }
 
-    // Запрещаем копирование
+    // Р—Р°РїСЂРµС‰Р°РµРј РєРѕРїРёСЂРѕРІР°РЅРёРµ
     IsolatedThread(const IsolatedThread&) = delete;
     IsolatedThread& operator=(const IsolatedThread&) = delete;
 };

@@ -10,7 +10,7 @@
 void SendDebugString(const char* str);
 void SendDebugStringW(const wchar_t* str);
 
-// Указатель на оригинальную ExitProcess
+// РЈРєР°Р·Р°С‚РµР»СЊ РЅР° РѕСЂРёРіРёРЅР°Р»СЊРЅСѓСЋ ExitProcess
 void (WINAPI* OriginalExitProcess)(UINT uExitCode) = nullptr;
 typedef void (WINAPI* OutputDebugStringA_t)(LPCSTR lpOutputString);
 
@@ -25,12 +25,12 @@ void WINAPI HookedExitProcess(UINT uExitCode) {
 
 
 VOID WINAPI HookedOutputDebugStringA(LPCSTR lpOutputString) {
-    // Перехватываем строку и отправляем в наше приложение
+    // РџРµСЂРµС…РІР°С‚С‹РІР°РµРј СЃС‚СЂРѕРєСѓ Рё РѕС‚РїСЂР°РІР»СЏРµРј РІ РЅР°С€Рµ РїСЂРёР»РѕР¶РµРЅРёРµ
     if (lpOutputString) {
         std::cout << "[Skullgirls Debugger]" << lpOutputString << "\n";
     }
 
-    // Вызываем оригинальную функцию
+    // Р’С‹Р·С‹РІР°РµРј РѕСЂРёРіРёРЅР°Р»СЊРЅСѓСЋ С„СѓРЅРєС†РёСЋ
     if (OriginalOutputDebugStringA) {
         OriginalOutputDebugStringA(lpOutputString);
     }
@@ -40,13 +40,13 @@ BOOL InitializeHook()
 {
     bool KernelHooked = false;
     bool d3d9Hooked = false;
-    HMODULE hModule = GetModuleHandle(nullptr); // Получаем базовый адрес текущего модуля
+    HMODULE hModule = GetModuleHandle(nullptr); // РџРѕР»СѓС‡Р°РµРј Р±Р°Р·РѕРІС‹Р№ Р°РґСЂРµСЃ С‚РµРєСѓС‰РµРіРѕ РјРѕРґСѓР»СЏ
     PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)hModule;
     PIMAGE_NT_HEADERS pNtHeaders = (PIMAGE_NT_HEADERS)((BYTE*)hModule + pDosHeader->e_lfanew);
     PIMAGE_IMPORT_DESCRIPTOR pImportDesc = (PIMAGE_IMPORT_DESCRIPTOR)((BYTE*)hModule +
         pNtHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);
 
-    // Ищем kernel32.dll в IAT
+    // РС‰РµРј kernel32.dll РІ IAT
     for (; pImportDesc->Name; pImportDesc++) {
         const char* dllName = (const char*)((BYTE*)hModule + pImportDesc->Name);
         if (_stricmp(dllName, "kernel32.dll") == 0) {
@@ -58,8 +58,8 @@ BOOL InitializeHook()
                 if (*ppFunc == GetProcAddress(GetModuleHandleA("kernel32.dll"), "ExitProcess")) {
                     DWORD oldProtect;
                     VirtualProtect(ppFunc, sizeof(PROC), PAGE_READWRITE, &oldProtect);
-                    OriginalExitProcess = (void (WINAPI*)(UINT)) * ppFunc; // Сохраняем оригинал
-                    *ppFunc = (PROC)HookedExitProcess; // Заменяем на свою функцию
+                    OriginalExitProcess = (void (WINAPI*)(UINT)) * ppFunc; // РЎРѕС…СЂР°РЅСЏРµРј РѕСЂРёРіРёРЅР°Р»
+                    *ppFunc = (PROC)HookedExitProcess; // Р—Р°РјРµРЅСЏРµРј РЅР° СЃРІРѕСЋ С„СѓРЅРєС†РёСЋ
                     VirtualProtect(ppFunc, sizeof(PROC), oldProtect, &oldProtect);
                     KernelHookedExitProcess = 1;
                     break;
@@ -68,8 +68,8 @@ BOOL InitializeHook()
                     if (config::DEBUG_ON) {
                         DWORD oldProtect;
                         VirtualProtect(ppFunc, sizeof(PROC), PAGE_READWRITE, &oldProtect);
-                        OriginalOutputDebugStringA = (void (WINAPI*)(LPCSTR)) * ppFunc; // Сохраняем оригинал
-                        *ppFunc = (PROC)HookedOutputDebugStringA; // Заменяем на свою функцию
+                        OriginalOutputDebugStringA = (void (WINAPI*)(LPCSTR)) * ppFunc; // РЎРѕС…СЂР°РЅСЏРµРј РѕСЂРёРіРёРЅР°Р»
+                        *ppFunc = (PROC)HookedOutputDebugStringA; // Р—Р°РјРµРЅСЏРµРј РЅР° СЃРІРѕСЋ С„СѓРЅРєС†РёСЋ
                         VirtualProtect(ppFunc, sizeof(PROC), oldProtect, &oldProtect);
                         KernelHookedOutputDebugStringA = 1;
                         break;
@@ -93,8 +93,8 @@ BOOL InitializeHook()
                 if (*ppFunc == GetProcAddress(GetModuleHandleA("d3d9.dll"), "Direct3DCreate9")) {
                     DWORD oldProtect;
                     VirtualProtect(ppFunc, sizeof(PROC), PAGE_READWRITE, &oldProtect);
-                    originalDirect3DCreate9 = (IDirect3D9 * (WINAPI*)(UINT)) * ppFunc; // Сохраняем оригинал
-                    *ppFunc = (PROC)HookedDirect3DCreate9; // Заменяем на свою функцию
+                    originalDirect3DCreate9 = (IDirect3D9 * (WINAPI*)(UINT)) * ppFunc; // РЎРѕС…СЂР°РЅСЏРµРј РѕСЂРёРіРёРЅР°Р»
+                    *ppFunc = (PROC)HookedDirect3DCreate9; // Р—Р°РјРµРЅСЏРµРј РЅР° СЃРІРѕСЋ С„СѓРЅРєС†РёСЋ
                     VirtualProtect(ppFunc, sizeof(PROC), oldProtect, &oldProtect);
                     d3d9Hooked = 1;
                     break;

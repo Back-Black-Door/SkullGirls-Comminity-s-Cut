@@ -404,7 +404,7 @@ namespace CCLib {
 
           std::ifstream inFile(main_paths::sal_file_path);
           if (!inFile) {
-              std::cerr << "Ошибка открытия файла!" << std::endl;
+              std::cerr << "РћС€РёР±РєР° РѕС‚РєСЂС‹С‚РёСЏ С„Р°Р№Р»Р°!" << std::endl;
               return 1;
           }
 
@@ -557,17 +557,17 @@ namespace CCLib {
       }
 
       int lua_add_to_json(lua_State* L) {
-          // Проверяем количество аргументов
+          // РџСЂРѕРІРµСЂСЏРµРј РєРѕР»РёС‡РµСЃС‚РІРѕ Р°СЂРіСѓРјРµРЅС‚РѕРІ
           if (lua_gettop(L) != 3) {
               luaL_error(L, "Expected 3 arguments: path to file, key, value");
               return 0;
           }
 
-          // Получаем аргументы из Lua
+          // РџРѕР»СѓС‡Р°РµРј Р°СЂРіСѓРјРµРЅС‚С‹ РёР· Lua
           const char* filepath = luaL_checkstring(L, 1);
           const char* key = luaL_checkstring(L, 2);
 
-          // Определяем тип значения и извлекаем его
+          // РћРїСЂРµРґРµР»СЏРµРј С‚РёРї Р·РЅР°С‡РµРЅРёСЏ Рё РёР·РІР»РµРєР°РµРј РµРіРѕ
           json value;
           int type = lua_type(L, 3);
 
@@ -594,19 +594,19 @@ namespace CCLib {
           try {
               json j;
 
-              // Пытаемся прочитать существующий файл
+              // РџС‹С‚Р°РµРјСЃСЏ РїСЂРѕС‡РёС‚Р°С‚СЊ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёР№ С„Р°Р№Р»
               std::ifstream input_file(filepath);
               if (input_file.good()) {
                   input_file >> j;
                   input_file.close();
               }
 
-              // Добавляем/обновляем значение
+              // Р”РѕР±Р°РІР»СЏРµРј/РѕР±РЅРѕРІР»СЏРµРј Р·РЅР°С‡РµРЅРёРµ
               j[key] = value;
 
-              // Записываем обратно в файл
+              // Р—Р°РїРёСЃС‹РІР°РµРј РѕР±СЂР°С‚РЅРѕ РІ С„Р°Р№Р»
               std::ofstream output_file(filepath);
-              output_file << j.dump(4); // 4 - отступ для красивого форматирования
+              output_file << j.dump(4); // 4 - РѕС‚СЃС‚СѓРї РґР»СЏ РєСЂР°СЃРёРІРѕРіРѕ С„РѕСЂРјР°С‚РёСЂРѕРІР°РЅРёСЏ
               output_file.close();
 
               lua_pushboolean(L, true);
@@ -631,7 +631,7 @@ namespace CCLib {
               luaL_error(L, "Expected 2 arguments:key, value");
               return 0;
           }
-          // Проверяем типы аргументов
+          // РџСЂРѕРІРµСЂСЏРµРј С‚РёРїС‹ Р°СЂРіСѓРјРµРЅС‚РѕРІ
           if (!lua_isstring(L, 1)) {
               luaL_error(L, "First argument must be a string (key)");
               return 0;

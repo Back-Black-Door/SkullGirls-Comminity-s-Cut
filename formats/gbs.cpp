@@ -12,7 +12,7 @@ gbs_t::gbs_t(const fs::path pathtoread) {
         File.open(pathtoread, std::ios::out | std::ios::in | std::ios::binary | std::ios::ate);
         if (File.is_open()) {
             auto size = File.tellg();
-            File.seekg(0);  // Возвращаемся в начало для чтения
+            File.seekg(0);  // Р’РѕР·РІСЂР°С‰Р°РµРјСЃСЏ РІ РЅР°С‡Р°Р»Рѕ РґР»СЏ С‡С‚РµРЅРёСЏ
             file_buffer.resize(size);
             File.read(reinterpret_cast<char*>(file_buffer.data()), size);
             _read();
@@ -187,36 +187,36 @@ void gbs_t::write(fs::path const pathtowrite) {
 }
 
 gbs_t merge(gbs_t& first_gbs, gbs_t& second_gbs, config config) {
-    gbs_t merged_gbs = first_gbs; // Начинаем с копии первого файла
+    gbs_t merged_gbs = first_gbs; // РќР°С‡РёРЅР°РµРј СЃ РєРѕРїРёРё РїРµСЂРІРѕРіРѕ С„Р°Р№Р»Р°
 
     double divider = 1.5;
     double divider2 = 1.45;
 
-    // Объединяем шрифты
+    // РћР±СЉРµРґРёРЅСЏРµРј С€СЂРёС„С‚С‹
     for (const auto& font : second_gbs.m_fonts) {
         bool font_exists = false;
 
-        // Ищем шрифт с таким же ID в объединенном файле
+        // РС‰РµРј С€СЂРёС„С‚ СЃ С‚Р°РєРёРј Р¶Рµ ID РІ РѕР±СЉРµРґРёРЅРµРЅРЅРѕРј С„Р°Р№Р»Рµ
         for (auto& existing_font : merged_gbs.m_fonts) {
             uint32_t old_atlas_count = existing_font.m_atlas_count;
             if (existing_font.m_font_id == font.m_font_id) {
                 font_exists = true;
 
-                // Если шрифт найден, проверяем его символы
+                // Р•СЃР»Рё С€СЂРёС„С‚ РЅР°Р№РґРµРЅ, РїСЂРѕРІРµСЂСЏРµРј РµРіРѕ СЃРёРјРІРѕР»С‹
                 for (const auto& letter : font.m_chars) {
                     bool letter_exists = false;
                     if (existing_font.m_max_top < round(double(font.m_max_top) / divider) && has_flag(config, divide_coords)) {
                         existing_font.m_max_top = round(double(font.m_max_top) / divider);
                     }
-                    // Проверяем, есть ли уже такой символ
+                    // РџСЂРѕРІРµСЂСЏРµРј, РµСЃС‚СЊ Р»Рё СѓР¶Рµ С‚Р°РєРѕР№ СЃРёРјРІРѕР»
                     for (const auto& existing_letter : existing_font.m_chars) {
                         if (existing_letter.m_char_code == letter.m_char_code) {
                             letter_exists = true;
-                            break; // Символ уже существует, пропускаем
+                            break; // РЎРёРјРІРѕР» СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚, РїСЂРѕРїСѓСЃРєР°РµРј
                         }
                     }
 
-                    // Если символа нет, добавляем его
+                    // Р•СЃР»Рё СЃРёРјРІРѕР»Р° РЅРµС‚, РґРѕР±Р°РІР»СЏРµРј РµРіРѕ
                     if (!letter_exists) {
                         gbs_t::char_t current = letter;
                         //768 --> 512;
@@ -236,7 +236,7 @@ gbs_t merge(gbs_t& first_gbs, gbs_t& second_gbs, config config) {
                             existing_font.m_atlas_count = current.m_char_atlas_index + 1;
                         }
                         existing_font.m_chars_count++;
-                        existing_font.m_font_lenght += 0x28; // Размер структуры char_t
+                        existing_font.m_font_lenght += 0x28; // Р Р°Р·РјРµСЂ СЃС‚СЂСѓРєС‚СѓСЂС‹ char_t
                         
                         merged_gbs.m_file_size += 0x28;
                         merged_gbs.m_textures_offset += 0x28;
@@ -246,18 +246,18 @@ gbs_t merge(gbs_t& first_gbs, gbs_t& second_gbs, config config) {
                     }
                 }
 
-                break; // Шрифт обработан, переходим к следующему
+                break; // РЁСЂРёС„С‚ РѕР±СЂР°Р±РѕС‚Р°РЅ, РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
             }
         }
 
-        // Если шрифта с таким ID нет, добавляем его целиком (если add_new_fonts == TRUE)
+        // Р•СЃР»Рё С€СЂРёС„С‚Р° СЃ С‚Р°РєРёРј ID РЅРµС‚, РґРѕР±Р°РІР»СЏРµРј РµРіРѕ С†РµР»РёРєРѕРј (РµСЃР»Рё add_new_fonts == TRUE)
         if (!font_exists && has_flag(config, add_new_fonts)) {
             merged_gbs.m_fonts.push_back(font);
             merged_gbs.m_fonts_count++;
         }
     }
 
-    // Обьеденям тексутры
+    // РћР±СЊРµРґРµРЅСЏРј С‚РµРєСЃСѓС‚СЂС‹
     for (const auto& texture : second_gbs.m_textures) {
         bool texture_exists = false;
         for (const auto& existing_texture : merged_gbs.m_textures) {
@@ -281,7 +281,7 @@ gbs_t merge(gbs_t& first_gbs, gbs_t& second_gbs, config config) {
         }
     }
     
-    // ... (остальная логика слияния текстур и других данных someday, but not today!)
+    // ... (РѕСЃС‚Р°Р»СЊРЅР°СЏ Р»РѕРіРёРєР° СЃР»РёСЏРЅРёСЏ С‚РµРєСЃС‚СѓСЂ Рё РґСЂСѓРіРёС… РґР°РЅРЅС‹С… someday, but not today!)
     return merged_gbs;
 }
 

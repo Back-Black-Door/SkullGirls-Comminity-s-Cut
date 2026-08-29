@@ -335,12 +335,12 @@ void SaveModData(const json& savedata)
 
 void AddLoc() {
     if (loc_json.empty()) {
-        return; // Нет данных для добавления
+        return; // РќРµС‚ РґР°РЅРЅС‹С… РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ
     }
     Console::DLL_WriteOutput("We are adding localization", FOREGROUND_BLUE);
     main_paths::loc_files_path = main_paths::work_dir_path + "\\data02\\localization";
     std::cout << loc_json << std::endl;
-    // Определяем целевой путь
+    // РћРїСЂРµРґРµР»СЏРµРј С†РµР»РµРІРѕР№ РїСѓС‚СЊ
     fs::path data01_path = main_paths::data01_dir_path + "\\core.gfs";
     fs::path data02_path = main_paths::data02_dir_path + "\\core.gfs";
 
@@ -355,17 +355,17 @@ void AddLoc() {
     }
     fs::path target = data02_path;
     try {
-        // Извлекаем файлы локализации
+        // РР·РІР»РµРєР°РµРј С„Р°Р№Р»С‹ Р»РѕРєР°Р»РёР·Р°С†РёРё
         GFSEdit localization{ target };
         localization.extract_files(main_paths::loc_files_path, "core/localization");
         std::cout << "HANDLE: " << localization.hFile << '\n';
-        // Обрабатываем все JSON файлы в директории
+        // РћР±СЂР°Р±Р°С‚С‹РІР°РµРј РІСЃРµ JSON С„Р°Р№Р»С‹ РІ РґРёСЂРµРєС‚РѕСЂРёРё
         for (const auto& entry : fs::directory_iterator(main_paths::loc_files_path)) {
             if (entry.is_regular_file() && entry.path().extension() == ".json") {
                 try {
                     std::cout << "Working with: " << entry.path() << std::endl;
 
-                    // Читаем JSON файл
+                    // Р§РёС‚Р°РµРј JSON С„Р°Р№Р»
                     std::ifstream file(entry.path());
                     if (!file.is_open()) {
                         std::cerr << "Opening file error: " << entry.path() << std::endl;
@@ -385,10 +385,10 @@ void AddLoc() {
 
                     bool modified = false;
 
-                    // Отладочная информация о loc_json
+                    // РћС‚Р»Р°РґРѕС‡РЅР°СЏ РёРЅС„РѕСЂРјР°С†РёСЏ Рѕ loc_json
                     std::cout << "loc_json have " << loc_json.size() << " elements" << std::endl;
 
-                    // Проверяем, является ли loc_json объектом (а не массивом)
+                    // РџСЂРѕРІРµСЂСЏРµРј, СЏРІР»СЏРµС‚СЃСЏ Р»Рё loc_json РѕР±СЉРµРєС‚РѕРј (Р° РЅРµ РјР°СЃСЃРёРІРѕРј)
                     if (loc_json.is_object()) {
 
                         for (auto& [key, value] : loc_json.items()) {
@@ -408,14 +408,14 @@ void AddLoc() {
                         std::cerr << "Error: loc_json are NOT JSON" << std::endl;
                     }
 
-                    // Записываем изменения, если были добавлены ключи
+                    // Р—Р°РїРёСЃС‹РІР°РµРј РёР·РјРµРЅРµРЅРёСЏ, РµСЃР»Рё Р±С‹Р»Рё РґРѕР±Р°РІР»РµРЅС‹ РєР»СЋС‡Рё
                     if (modified) {
                         std::ofstream out_file(entry.path());
                         if (!out_file.is_open()) {
                             std::cerr << "Error opening file: " << entry.path() << std::endl;
                             continue;
                         }
-                        out_file << data.dump(4); // Форматируем с отступами
+                        out_file << data.dump(4); // Р¤РѕСЂРјР°С‚РёСЂСѓРµРј СЃ РѕС‚СЃС‚СѓРїР°РјРё
                         out_file.close();
                         std::cout << "File update: " << entry.path() << std::endl;
                     }

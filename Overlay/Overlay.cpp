@@ -26,25 +26,25 @@ extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam
 namespace Overlay { 
     LRESULT CALLBACK Input(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         {
-            // Всегда передаем сообщения в ImGui для обработки
+            // Р’СЃРµРіРґР° РїРµСЂРµРґР°РµРј СЃРѕРѕР±С‰РµРЅРёСЏ РІ ImGui РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё
             ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
 
-            // Получаем состояние ImGui
+            // РџРѕР»СѓС‡Р°РµРј СЃРѕСЃС‚РѕСЏРЅРёРµ ImGui
             ImGuiIO& io = ImGui::GetIO();
-            // Обрабатываем нажатие Insert 
+            // РћР±СЂР°Р±Р°С‚С‹РІР°РµРј РЅР°Р¶Р°С‚РёРµ Insert 
             if (uMsg == WM_KEYDOWN && wParam == VK_INSERT)
             {
                 imgui_show::Show_Window = !imgui_show::Show_Window;
                 return 0;
             }
 
-            // Блокируем сообщения мыши, если ImGui хочет их обработать
+            // Р‘Р»РѕРєРёСЂСѓРµРј СЃРѕРѕР±С‰РµРЅРёСЏ РјС‹С€Рё, РµСЃР»Рё ImGui С…РѕС‡РµС‚ РёС… РѕР±СЂР°Р±РѕС‚Р°С‚СЊ
             if (((uMsg >= WM_MOUSEFIRST && uMsg <= WM_MOUSELAST) && io.WantCaptureMouse) && imgui_show::Show_Window)
             {
                 return true;
             }
 
-            // Блокируем сообщения клавиатуры, если ImGui хочет их обработать
+            // Р‘Р»РѕРєРёСЂСѓРµРј СЃРѕРѕР±С‰РµРЅРёСЏ РєР»Р°РІРёР°С‚СѓСЂС‹, РµСЃР»Рё ImGui С…РѕС‡РµС‚ РёС… РѕР±СЂР°Р±РѕС‚Р°С‚СЊ
             if (((uMsg >= WM_KEYFIRST && uMsg <= WM_KEYLAST) && io.WantCaptureKeyboard) && imgui_show::Show_Window)
             {
                 return true;
@@ -62,10 +62,10 @@ namespace Overlay {
             ImVec2 min_size = ImVec2(100, 100);
             ImVec2 max_size = ImVec2(800, 600);
             ImGui::SetNextWindowSizeConstraints(min_size, max_size);
-            // Установка начальной позиции и размера
+            // РЈСЃС‚Р°РЅРѕРІРєР° РЅР°С‡Р°Р»СЊРЅРѕР№ РїРѕР·РёС†РёРё Рё СЂР°Р·РјРµСЂР°
             ImGui::SetNextWindowPos(ImVec2(100, 100), ImGuiCond_FirstUseEver);
             ImGui::SetNextWindowSize(ImVec2(300, 200), ImGuiCond_FirstUseEver);
-            // Окно управления камерой
+            // РћРєРЅРѕ СѓРїСЂР°РІР»РµРЅРёСЏ РєР°РјРµСЂРѕР№
             ImGui::Begin("Skullgirls Community's Cut", &imgui_show::Show_Window);
             ImGui::BeginTabBar("Nav_Bar");
             if (ImGui::BeginTabItem("Main")) {
@@ -198,20 +198,20 @@ namespace Overlay {
             }
             ImGui::EndTabBar();
 
-            // Получаем текущую позицию и размер окна
+            // РџРѕР»СѓС‡Р°РµРј С‚РµРєСѓС‰СѓСЋ РїРѕР·РёС†РёСЋ Рё СЂР°Р·РјРµСЂ РѕРєРЅР°
             ImVec2 current_pos = ImGui::GetWindowPos();
             ImVec2 current_size = ImGui::GetWindowSize();
 
-            // Задаём границы (например, границы окна приложения или родительской области)
+            // Р—Р°РґР°С‘Рј РіСЂР°РЅРёС†С‹ (РЅР°РїСЂРёРјРµСЂ, РіСЂР°РЅРёС†С‹ РѕРєРЅР° РїСЂРёР»РѕР¶РµРЅРёСЏ РёР»Рё СЂРѕРґРёС‚РµР»СЊСЃРєРѕР№ РѕР±Р»Р°СЃС‚Рё)
             ImVec2 min_bound(0, 0);
             ImVec2 max_bound = ImGui::GetMainViewport()->Size;
 
-            // Корректируем позицию, чтобы окно не выходило за границы
+            // РљРѕСЂСЂРµРєС‚РёСЂСѓРµРј РїРѕР·РёС†РёСЋ, С‡С‚РѕР±С‹ РѕРєРЅРѕ РЅРµ РІС‹С…РѕРґРёР»Рѕ Р·Р° РіСЂР°РЅРёС†С‹
             ImVec2 new_pos = current_pos;
             new_pos.x = ImClamp(new_pos.x, min_bound.x, max_bound.x - current_size.x);
             new_pos.y = ImClamp(new_pos.y, min_bound.y, max_bound.y - current_size.y);
 
-            // Если позиция изменилась, применяем новую позицию
+            // Р•СЃР»Рё РїРѕР·РёС†РёСЏ РёР·РјРµРЅРёР»Р°СЃСЊ, РїСЂРёРјРµРЅСЏРµРј РЅРѕРІСѓСЋ РїРѕР·РёС†РёСЋ
             if (new_pos.x != current_pos.x || new_pos.y != current_pos.y) {
                 ImGui::SetWindowPos(new_pos);
             }
@@ -224,5 +224,6 @@ namespace Overlay {
             }
         }
     }
+
 
 

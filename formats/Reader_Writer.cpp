@@ -42,12 +42,12 @@ namespace reader {
     }
     std::string readBuffer_VectorUnChar_to_String(
         const std::vector<unsigned char>& buffer, size_t Start, size_t SizeOfString) {
-        // Проверка на выход за границы
+        // РџСЂРѕРІРµСЂРєР° РЅР° РІС‹С…РѕРґ Р·Р° РіСЂР°РЅРёС†С‹
         if (Start + SizeOfString > buffer.size()) {
             throw ("Buffer read out of range!");
         }
 
-        // Создаём строку напрямую из данных буфера
+        // РЎРѕР·РґР°С‘Рј СЃС‚СЂРѕРєСѓ РЅР°РїСЂСЏРјСѓСЋ РёР· РґР°РЅРЅС‹С… Р±СѓС„РµСЂР°
         return std::string(
             reinterpret_cast<const char*>(&buffer[Start]),
             SizeOfString
@@ -55,21 +55,21 @@ namespace reader {
     }
 }
 namespace writer {
-    // Добавление uint16_t в Big-Endian порядке (2 байта)
+    // Р”РѕР±Р°РІР»РµРЅРёРµ uint16_t РІ Big-Endian РїРѕСЂСЏРґРєРµ (2 Р±Р°Р№С‚Р°)
     void appendBE16(std::vector<unsigned char>& vec, uint16_t value) {
-        vec.push_back(static_cast<unsigned char>((value >> 8) & 0xFF));  // Старший байт
-        vec.push_back(static_cast<unsigned char>(value & 0xFF));         // Младший байт
+        vec.push_back(static_cast<unsigned char>((value >> 8) & 0xFF));  // РЎС‚Р°СЂС€РёР№ Р±Р°Р№С‚
+        vec.push_back(static_cast<unsigned char>(value & 0xFF));         // РњР»Р°РґС€РёР№ Р±Р°Р№С‚
     }
 
-    // Добавление uint16_t в Little-Endian порядке (2 байта)
+    // Р”РѕР±Р°РІР»РµРЅРёРµ uint16_t РІ Little-Endian РїРѕСЂСЏРґРєРµ (2 Р±Р°Р№С‚Р°)
     void appendLE16(std::vector<unsigned char>& vec, uint16_t value) {
-        vec.push_back(static_cast<unsigned char>(value & 0xFF));         // Младший байт
-        vec.push_back(static_cast<unsigned char>((value >> 8) & 0xFF));  // Старший байт
+        vec.push_back(static_cast<unsigned char>(value & 0xFF));         // РњР»Р°РґС€РёР№ Р±Р°Р№С‚
+        vec.push_back(static_cast<unsigned char>((value >> 8) & 0xFF));  // РЎС‚Р°СЂС€РёР№ Р±Р°Р№С‚
     }
 
 
 
-    // Добавление uint32_t в Big-Endian порядке
+    // Р”РѕР±Р°РІР»РµРЅРёРµ uint32_t РІ Big-Endian РїРѕСЂСЏРґРєРµ
     void appendBE32(std::vector<unsigned char>& vec, uint32_t value) {
         vec.push_back(static_cast<unsigned char>((value >> 24) & 0xFF));
         vec.push_back(static_cast<unsigned char>((value >> 16) & 0xFF));
@@ -77,7 +77,7 @@ namespace writer {
         vec.push_back(static_cast<unsigned char>(value & 0xFF));
     }
 
-    // Добавление uint32_t в Little-Endian порядке
+    // Р”РѕР±Р°РІР»РµРЅРёРµ uint32_t РІ Little-Endian РїРѕСЂСЏРґРєРµ
     void appendLE32(std::vector<unsigned char>& vec, uint32_t value) {
         vec.push_back(static_cast<unsigned char>(value & 0xFF));
         vec.push_back(static_cast<unsigned char>((value >> 8) & 0xFF));
@@ -87,7 +87,7 @@ namespace writer {
     
 
 
-    // Добавление uint64_t в Big-Endian порядке
+    // Р”РѕР±Р°РІР»РµРЅРёРµ uint64_t РІ Big-Endian РїРѕСЂСЏРґРєРµ
     void appendBE64(std::vector<unsigned char>& vec, uint64_t value) {
         vec.push_back(static_cast<unsigned char>((value >> 56) & 0xFF));
         vec.push_back(static_cast<unsigned char>((value >> 48) & 0xFF));
@@ -99,7 +99,7 @@ namespace writer {
         vec.push_back(static_cast<unsigned char>(value & 0xFF));
     }
 
-    // Добавление uint64_t в Little-Endian порядке
+    // Р”РѕР±Р°РІР»РµРЅРёРµ uint64_t РІ Little-Endian РїРѕСЂСЏРґРєРµ
     void appendLE64(std::vector<unsigned char>& vec, uint64_t value) {
         vec.push_back(static_cast<unsigned char>(value & 0xFF));
         vec.push_back(static_cast<unsigned char>((value >> 8) & 0xFF));
@@ -113,7 +113,7 @@ namespace writer {
 
 
 
-    // Добавление строки (без указания длины)
+    // Р”РѕР±Р°РІР»РµРЅРёРµ СЃС‚СЂРѕРєРё (Р±РµР· СѓРєР°Р·Р°РЅРёСЏ РґР»РёРЅС‹)
     void appendString(std::vector<unsigned char>& vec, const std::string& str) {
         vec.insert(vec.end(), str.begin(), str.end());
     }

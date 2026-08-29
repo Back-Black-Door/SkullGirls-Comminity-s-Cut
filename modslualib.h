@@ -104,7 +104,7 @@ namespace CCLib {
      {"getModVersion", getModVersion},
      {"gfsCommitChanges", gfsCommitChanges},
      {"addLocalization", addLocalization},
-     {nullptr, nullptr} // Маркер конца
+     {nullptr, nullptr} // РњР°СЂРєРµСЂ РєРѕРЅС†Р°
     };
     void push_vars(lua_State* L, const luaL_Var* vars);
 }
