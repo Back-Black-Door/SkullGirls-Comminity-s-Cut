@@ -1,12 +1,18 @@
 #pragma once
 #include <Windows.h>
 #include <string>
+#include <filesystem>
 #include "json.hpp"
 #include "modslualib.h"
 
 using json = nlohmann::json;
 
 inline json loc_json;
+
+// data02 наполняется ссылками на файлы data01. Символическая ссылка требует прав,
+// жёсткая — нет, поэтому создаём жёсткую. Отличить любую из них от настоящей копии
+// можно по числу ссылок на файл.
+bool IsLinkedToOriginal(const std::filesystem::path& target);
 
 namespace config {
 	inline const int CURRENT_CC_VERSION = 1;

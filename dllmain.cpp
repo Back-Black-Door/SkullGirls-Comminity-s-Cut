@@ -86,15 +86,17 @@ bool HandleProcessAttach(HMODULE hModule) {
     if (!InitializePaths(savedata)) {
         OutputDebugString("We can't init path!");
     };
+    // Наполняем data02 до установки модов: они правят файлы именно там, и на
+    // первом запуске править было бы нечего.
+    if (!CreateGFSLinks()) {
+        OutputDebugString("We can't create links!");
+    };
     if (!InitializeMods(savedata)) {
         OutputDebugString("We can't init mods!");
     };
 #ifdef _DEBUG
     system("pause");
 #endif
-    if (!CreateGFSLinks()) {
-        OutputDebugString("We can't create symlink!");
-    };
     AddLoc();
 #ifdef _DEBUG
     system("pause");
@@ -285,6 +287,13 @@ void ManageModLifecycle(Mod& mod, json& savedata)
     mod.init();
 }
 
+bool IsLinkedToOriginal(const fs::path& target) {
+    std::error_code ec;
+    if (fs::is_symlink(target, ec)) return true;
+    const auto count = fs::hard_link_count(target, ec);
+    return !ec && count > 1;
+}
+
 bool CreateGFSLinks()
 {
     Console::DLL_WriteOutput("Checking .gfs files before starting the game\n", FOREGROUND_BLUE);
@@ -296,15 +305,11 @@ bool CreateGFSLinks()
                 auto target = data02_path / entry.path().filename();
 
                 if (!fs::exists(target)) {
-                    if (fs::is_symlink(target)) {
-                        std::string Message = "Filesystem error creating GFS links: " + target.string();
-                        Console::DLL_WriteOutput(Message.c_str());
-                    }
-                    else {
-                        fs::create_symlink(entry.path(), target);
-                        std::string Message = "Created symlink: " + target.string();
-                        Console::DLL_WriteOutput(Message.c_str());
-                    }
+                    // Ссылка от прежних версий, указывающая в никуда.
+                    if (fs::is_symlink(target)) fs::remove(target);
+                    fs::create_hard_link(entry.path(), target);
+                    std::string Message = "Created link: " + target.string();
+                    Console::DLL_WriteOutput(Message.c_str());
                 }
             }
         }
@@ -343,7 +348,7 @@ void AddLoc() {
     fs::path data01_path = main_paths::data01_dir_path + "\\core.gfs";
     fs::path data02_path = main_paths::data02_dir_path + "\\core.gfs";
 
-    if (fs::is_symlink(data02_path)) {
+    if (IsLinkedToOriginal(data02_path)) {
         fs::remove(data02_path);
         fs::copy_file(data01_path, data02_path);
     }

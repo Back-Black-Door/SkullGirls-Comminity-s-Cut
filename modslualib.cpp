@@ -319,7 +319,7 @@ namespace CCLib {
           fs::path targetdata02 = data02_path / gfsname;
           
           targetdata02.replace_extension(".gfs");
-            if (fs::is_symlink(targetdata02)) {
+            if (IsLinkedToOriginal(targetdata02)) {
                 fs::remove(targetdata02);
                 fs::copy_file((data01_path / gfsname).replace_extension(".gfs"), targetdata02);
             } 
@@ -364,7 +364,7 @@ namespace CCLib {
           fs::path targetdata02 = data02_path / gfsname;
 
           targetdata02.replace_extension(".gfs");
-          if (fs::is_symlink(targetdata02)) {
+          if (IsLinkedToOriginal(targetdata02)) {
               fs::remove(targetdata02);
               fs::copy_file((data01_path / gfsname).replace_extension(".gfs"), targetdata02);
           }
@@ -445,7 +445,7 @@ namespace CCLib {
           fs::path targetdata02 = data02_path / gfsname;
 
           targetdata02.replace_extension(".gfs");
-          if (fs::is_symlink(targetdata02)) {
+          if (IsLinkedToOriginal(targetdata02)) {
               fs::remove(targetdata02);
               fs::copy_file((data01_path / gfsname).replace_extension(".gfs"), targetdata02);
           }
@@ -477,7 +477,7 @@ namespace CCLib {
           fs::path targetdata02 = data02_path / gfsname;
 
           targetdata02.replace_extension(".gfs");
-          if (fs::is_symlink(targetdata02)) {
+          if (IsLinkedToOriginal(targetdata02)) {
               fs::remove(targetdata02);
               fs::copy_file((data01_path / gfsname).replace_extension(".gfs"), targetdata02);
           }
