@@ -63,6 +63,9 @@ HRESULT STDMETHODCALLTYPE Hooked_Reset(IDirect3DDevice9* pDevice, D3DPRESENT_PAR
 // Функция для перехвата методов устройства
 void HookDevice(IDirect3DDevice9* pDevice)
 {
+    // Повторный вызов сохранил бы наш же хук как оригинал
+    if (OriginalPresent) return;
+
     // Получаем указатель на таблицу виртуальных методов
     void** vTable = *((void***)pDevice);
 
@@ -128,6 +131,9 @@ IDirect3D9* WINAPI HookedDirect3DCreate9(UINT SDKVersion)
     IDirect3D9* pD3D = originalDirect3DCreate9(SDKVersion);
     if (!pD3D)
         return nullptr;
+
+    // Таблица общая для всех экземпляров, патчим её один раз
+    if (OriginalCreateDevice) return pD3D;
 
     // Перехватываем виртуальную таблицу IDirect3D9
     void** vTable = *((void***)pD3D);
