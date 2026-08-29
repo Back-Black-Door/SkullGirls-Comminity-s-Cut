@@ -313,7 +313,6 @@ bool CreateGFSLinks()
     catch (const fs::filesystem_error& e) {
         std::string errorMessage = "Filesystem error creating GFS links: " + std::string(e.what()) + "\n";
         Console::DLL_WriteOutput(errorMessage.c_str(), FOREGROUND_RED);
-        throw;
         return false;
     }
     return true;
