@@ -10,3 +10,4 @@ bool GetCurrentProcessInfo();
 
 const DWORD getppid();
 const BOOL PidNameTest(DWORD processId, const std::string& moduleName);
+const BOOL ParentProcessIs(const std::string& exeName);

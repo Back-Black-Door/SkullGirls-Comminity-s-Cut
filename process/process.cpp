@@ -2,6 +2,7 @@
 #include <string>
 #include <TlHelp32.h>
 #include <tchar.h>
+#include <string.h>
 #include "process.h"
 
 DWORD GetModuleBaseAddress();
@@ -32,6 +33,37 @@ const DWORD getppid()
     }
     return ppid;
 }
+// Имя родителя берём из того же снимка процессов, что и его pid. Снимок модулей
+// чужого процесса для этого не годится: он требует доступа к процессу и совпадения
+// разрядности, и молча возвращает "не найдено", когда чего-то из этого нет.
+const BOOL ParentProcessIs(const std::string& exeName) {
+    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hSnapshot == INVALID_HANDLE_VALUE) return false;
+
+    PROCESSENTRY32 pe32 = { 0 };
+    pe32.dwSize = sizeof(pe32);
+    DWORD pid = GetCurrentProcessId(), ppid = 0;
+    BOOL found = false;
+
+    if (Process32First(hSnapshot, &pe32)) {
+        do {
+            if (pe32.th32ProcessID == pid) { ppid = pe32.th32ParentProcessID; break; }
+        } while (Process32Next(hSnapshot, &pe32));
+    }
+
+    if (ppid && Process32First(hSnapshot, &pe32)) {
+        do {
+            if (pe32.th32ProcessID == ppid) {
+                found = (_stricmp(pe32.szExeFile, exeName.c_str()) == 0);
+                break;
+            }
+        } while (Process32Next(hSnapshot, &pe32));
+    }
+
+    CloseHandle(hSnapshot);
+    return found;
+}
+
 const BOOL PidNameTest(DWORD processId, const std::string& moduleName) {
     DWORD dwModuleBaseAddress = 0;
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId); // make snapshot of all modules within process
