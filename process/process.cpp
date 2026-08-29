@@ -51,6 +51,7 @@ const BOOL ParentProcessIs(const std::string& exeName) {
         } while (Process32Next(hSnapshot, &pe32));
     }
 
+    pe32.dwSize = sizeof(pe32); // Требуется перед каждым Process32First.
     if (ppid && Process32First(hSnapshot, &pe32)) {
         do {
             if (pe32.th32ProcessID == ppid) {
