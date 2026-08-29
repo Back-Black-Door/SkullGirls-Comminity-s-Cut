@@ -19,7 +19,9 @@ namespace config {
 	inline const std::string EXE_NAME = "SkullGirls.exe";
 	inline const std::string SAVE_FILE_NAME = "saves_CC.json";
 	inline const char SAL_FILE_NAME[] = "FULL_SGCC.sal";
-	inline std::string SteamLunchName = "start steam://run/245170/";
+	inline const std::string STEAM_APP_ID = "245170";
+	inline std::string SteamLunchName = "steam://run/245170/";
+	inline std::string SteamLunchArgs; // Параметры игры, без argv[0].
 
 	inline bool DEBUG_ON{ 0 }; // LaunchOptions
 	inline bool REINSTALL_ALL{ 0 };

@@ -1,5 +1,6 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include <Windows.h>
+#include <shellapi.h>
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -35,6 +36,25 @@ BOOL APIENTRY DllMain( HMODULE hModule,
         break;
     }
     return TRUE;
+}
+
+// Путь к steam.exe из реестра. Для 32-битного процесса ветка HKLM сама
+// перенаправляется в WOW6432Node, отдельный путь не нужен.
+static std::string SteamExePath() {
+    char buffer[MAX_PATH] = { 0 };
+    DWORD size = sizeof(buffer);
+    if (RegGetValueA(HKEY_CURRENT_USER, "Software\\Valve\\Steam", "SteamPath",
+        RRF_RT_REG_SZ, nullptr, buffer, &size) != ERROR_SUCCESS) {
+        size = sizeof(buffer);
+        if (RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Valve\\Steam", "InstallPath",
+            RRF_RT_REG_SZ, nullptr, buffer, &size) != ERROR_SUCCESS) {
+            return {};
+        }
+    }
+    std::string path(buffer);
+    for (auto& c : path) if (c == '/') c = '\\';
+    if (!path.empty() && path.back() != '\\') path += '\\';
+    return path + "steam.exe";
 }
 
 bool HandleProcessAttach(HMODULE hModule) {
@@ -75,7 +95,37 @@ bool HandleProcessAttach(HMODULE hModule) {
     if (!fs::exists(main_paths::work_dir_path + "\\steam_appid.txt")) {
         if (!ParentProcessIs("steam.exe")) {
             Console::DLL_WriteOutput("We are not child of steam");
-            system(config::SteamLunchName.c_str());
+            // Через steam.exe напрямую. ShellExecute здесь не работает: мы внутри
+            // DllMain под loader lock, а ей нужны оболочка и COM, которые оттуда
+            // инициализировать нельзя -- Steam запроса просто не получал. И этот путь
+            // принимает параметры без окна подтверждения, в отличие от steam:// ссылки.
+            std::string steam = SteamExePath();
+            bool launched = false;
+            if (!steam.empty()) {
+                std::string line = "\"" + steam + "\" -applaunch " + config::STEAM_APP_ID;
+                if (!config::SteamLunchArgs.empty()) line += " " + config::SteamLunchArgs;
+                Console::DLL_WriteOutput(("\nAsking Steam: " + line).c_str());
+                OutputDebugStringA(line.c_str());
+                std::vector<char> mutableLine(line.begin(), line.end());
+                mutableLine.push_back(0);
+                STARTUPINFOA si = { sizeof(si) };
+                PROCESS_INFORMATION pi = { 0 };
+                if (CreateProcessA(nullptr, mutableLine.data(), nullptr, nullptr, FALSE,
+                    0, nullptr, nullptr, &si, &pi)) {
+                    CloseHandle(pi.hThread);
+                    CloseHandle(pi.hProcess);
+                    launched = true;
+                }
+            }
+            if (!launched) {
+                // Запасной путь: раньше запуск шёл именно так и работал.
+                Console::DLL_WriteOutput("\nFalling back to the steam:// link");
+                system(("start " + config::SteamLunchName).c_str());
+            }
+            // Иначе процесс продолжает жить без мода: пустое окно, которое висит, и
+            // жалоба Steam на уже запущенную игру. ExitProcess из DllMain берёт loader
+            // lock, поэтому завершаемся жёстко.
+            TerminateProcess(GetCurrentProcess(), 0);
             return 0;
         }
     }
@@ -143,7 +193,8 @@ bool ReadMainArgs() {
         WideCharToMultiByte(CP_UTF8, 0, argv[0], -1, buffer.data(), bufferSize, NULL, NULL);
         main_paths::exe_path = std::string(buffer.data());
     }
-    for (int i = 0; i < argc; i++) {
+    // С единицы: argv[0] это путь к exe, в параметрах игры ему делать нечего.
+    for (int i = 1; i < argc; i++) {
 #ifdef _DEBUG
         wprintf(L"Argument %d: %ls\n", i, argv[i]);
 #endif // DEBUG 
@@ -161,8 +212,10 @@ bool ReadMainArgs() {
         if (bufferSize > 0) {
             std::vector<char> buffer(bufferSize);
             WideCharToMultiByte(CP_UTF8, 0, argv[i], -1, buffer.data(), bufferSize, NULL, NULL);
-            config::SteamLunchName += std::string(buffer.data());
-            config::SteamLunchName += "%20";
+            std::string arg(buffer.data());
+            if (arg.find(' ') != std::string::npos) arg = "\"" + arg + "\"";
+            if (!config::SteamLunchArgs.empty()) config::SteamLunchArgs += " ";
+            config::SteamLunchArgs += arg;
         }
     }
     LocalFree(argv);
@@ -257,8 +310,10 @@ bool InitializeMods(json& savedata)
         }
         SaveModData(savedata);
     }
-    catch (const std::exception&)
+    catch (const std::exception& e)
     {
+        std::string errorMessage = "Mod init error: " + std::string(e.what()) + "\n";
+        Console::DLL_WriteOutput(errorMessage.c_str(), FOREGROUND_RED);
         return false;
     }
     return true;
