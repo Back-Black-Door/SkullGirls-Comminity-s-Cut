@@ -3,7 +3,7 @@
 
 #include "dll_proxy.h"
 
-// Умные указатели для автоматического управления ресурсами
+// РЈРјРЅС‹Рµ СѓРєР°Р·Р°С‚РµР»Рё РґР»СЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРѕРіРѕ СѓРїСЂР°РІР»РµРЅРёСЏ СЂРµСЃСѓСЂСЃР°РјРё
 struct HandleDeleter {
     void operator()(HMODULE module) const {
         if (module) FreeLibrary(module);
@@ -13,32 +13,66 @@ struct HandleDeleter {
 using ScopedModule = std::unique_ptr<std::remove_pointer<HMODULE>::type, HandleDeleter>;
 ScopedModule hL;
 
-FARPROC PROXY_FUNC_ADRESS[33] = { 0 };
+static const char* const PROXY_FUNC_NAMES[33] = {
+    "CoreUICallComputeMaximumMessageSize",
+    "CoreUICallCreateConversationHost",
+    "CoreUICallCreateEndpointHost",
+    "CoreUICallCreateEndpointHostWithSendPriority",
+    "CoreUICallGetAddressOfParameterInBuffer",
+    "CoreUICallReceive",
+    "CoreUICallSend",
+    "CoreUICallSendVaList",
+    "CoreUIConfigureTestHost",
+    "CoreUIConfigureUserIntegration",
+    "CoreUICreate",
+    "CoreUICreateAnonymousStream",
+    "CoreUICreateClientWindowIDManager",
+    "CoreUICreateEx",
+    "CoreUICreateSystemWindowIDManager",
+    "CoreUIInitializeTestService",
+    "CoreUIOpenExisting",
+    "CoreUIRouteToTestRegistrar",
+    "CoreUIUninitializeTestService",
+    "CreateDispatcherQueueController",
+    "CreateDispatcherQueueForCurrentThread",
+    "DllCanUnloadNow",
+    "DllGetActivationFactory",
+    "DllGetClassObject",
+    "GetDispatcherQueueForCurrentThread",
+    "MsgBlobCreateShared",
+    "MsgBlobCreateStack",
+    "MsgBufferShare",
+    "MsgRelease",
+    "MsgStringCreateShared",
+    "MsgStringCreateStack",
+    "ServiceMain",
+    "SvchostPushServiceGlobals",
+};
 
 bool DLL_PROXY_LOAD() {
     char system_Path[MAX_PATH] = { 0 };
 
-    // Получаем путь к SysWOW64 директории
+    // РџРѕР»СѓС‡Р°РµРј РїСѓС‚СЊ Рє SysWOW64 РґРёСЂРµРєС‚РѕСЂРёРё
     if (GetSystemWow64DirectoryA(system_Path, MAX_PATH) == 0) { //For 64-bit
         GetSystemDirectoryA(system_Path, MAX_PATH);
     }
 
-    // Формируем полный путь к библиотеке
+    // Р¤РѕСЂРјРёСЂСѓРµРј РїРѕР»РЅС‹Р№ РїСѓС‚СЊ Рє Р±РёР±Р»РёРѕС‚РµРєРµ
     std::string fullPath = system_Path;
     fullPath += "\\CoreMessaging.DLL";
 
-    // Загружаем библиотеку
+    // Р—Р°РіСЂСѓР¶Р°РµРј Р±РёР±Р»РёРѕС‚РµРєСѓ
     HMODULE tempHandle = LoadLibraryA(fullPath.c_str());
     if (!tempHandle) {
         return false;
     }
 
-    hL.reset(tempHandle); // Передаем владение умному указателю
+    hL.reset(tempHandle); // РџРµСЂРµРґР°РµРј РІР»Р°РґРµРЅРёРµ СѓРјРЅРѕРјСѓ СѓРєР°Р·Р°С‚РµР»СЋ
 
-    // Безопасная загрузка функций
+    // Р‘РµР·РѕРїР°СЃРЅР°СЏ Р·Р°РіСЂСѓР·РєР° С„СѓРЅРєС†РёР№
     try {
         for (int i = 0; i < 33; i++) {
-            PROXY_FUNC_ADRESS[i] = GetProcAddress(tempHandle, (LPCSTR)(i + 1)); // Ординалы начинаются с 1
+            PROXY_FUNC_ADRESS[i] = GetProcAddress(tempHandle, PROXY_FUNC_NAMES[i]);
             if (!PROXY_FUNC_ADRESS[i]) return FALSE;
         }
         return true;
@@ -49,11 +83,11 @@ bool DLL_PROXY_LOAD() {
 }
 
 void DLL_PROXY_UNLOAD() {
-    // Умный указатель автоматически вызовет FreeLibrary при разрушении
+    // РЈРјРЅС‹Р№ СѓРєР°Р·Р°С‚РµР»СЊ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·РѕРІРµС‚ FreeLibrary РїСЂРё СЂР°Р·СЂСѓС€РµРЅРёРё
     hL.reset();
 }
 
-// Макрос для генерации прокси-функций
+// РњР°РєСЂРѕСЃ РґР»СЏ РіРµРЅРµСЂР°С†РёРё РїСЂРѕРєСЃРё-С„СѓРЅРєС†РёР№
 #define GENERATE_PROXY_FUNCTION(index) \
 extern "C" __declspec(naked) void __stdcall ProxyFunction##index() \
 { \
