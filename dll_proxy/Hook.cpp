@@ -66,39 +66,26 @@ BOOL InitializeHook()
     for (; pImportDesc->Name; pImportDesc++) {
         const char* dllName = (const char*)((BYTE*)hModule + pImportDesc->Name);
         if (_stricmp(dllName, "kernel32.dll") == 0) {
-            bool KernelHookedExitProcess = false;
-            bool KernelHookedOutputDebugStringA = false;
-            PIMAGE_THUNK_DATA pThunk = (PIMAGE_THUNK_DATA)((BYTE*)hModule + pImportDesc->FirstThunk);
-            for (; pThunk->u1.Function; pThunk++) {
-                PROC* ppFunc = (PROC*)&pThunk->u1.Function;
-                if (*ppFunc == GetProcAddress(GetModuleHandleA("kernel32.dll"), "ExitProcess")) {
-                    DWORD oldProtect;
-                    VirtualProtect(ppFunc, sizeof(PROC), PAGE_READWRITE, &oldProtect);
-                    OriginalExitProcess = (void (WINAPI*)(UINT)) * ppFunc; // Сохраняем оригинал
-                    *ppFunc = (PROC)HookedExitProcess; // Заменяем на свою функцию
-                    VirtualProtect(ppFunc, sizeof(PROC), oldProtect, &oldProtect);
-                    KernelHookedExitProcess = 1;
-                    break;
-                }
-                if (*ppFunc == GetProcAddress(GetModuleHandleA("kernel32.dll"), "OutputDebugStringA")) {
-                    if (config::DEBUG_ON) {
-                        DWORD oldProtect;
-                        VirtualProtect(ppFunc, sizeof(PROC), PAGE_READWRITE, &oldProtect);
-                        OriginalOutputDebugStringA = (void (WINAPI*)(LPCSTR)) * ppFunc; // Сохраняем оригинал
-                        *ppFunc = (PROC)HookedOutputDebugStringA; // Заменяем на свою функцию
-                        VirtualProtect(ppFunc, sizeof(PROC), oldProtect, &oldProtect);
-                        KernelHookedOutputDebugStringA = 1;
-                        break;
-                    }
-                    else {
-                        KernelHookedOutputDebugStringA = 1;
-                        break;
-                    }
-                }
-                if (KernelHookedExitProcess and KernelHookedOutputDebugStringA) {
-                    KernelHooked = 1;
-                    break;
-                }
+            PROC* ppExit = FindImportSlot((BYTE*)hModule, pImportDesc, "ExitProcess");
+            if (ppExit) {
+                DWORD oldProtect;
+                VirtualProtect(ppExit, sizeof(PROC), PAGE_READWRITE, &oldProtect);
+                OriginalExitProcess = (void (WINAPI*)(UINT)) * ppExit; // Сохраняем оригинал
+                *ppExit = (PROC)HookedExitProcess; // Заменяем на свою функцию
+                VirtualProtect(ppExit, sizeof(PROC), oldProtect, &oldProtect);
+                KernelHooked = 1;
+            }
+
+            // Перенаправляет отладочный вывод в консоль мода, включается -logtoconsole.
+            PROC* ppDebug = config::DEBUG_ON
+                ? FindImportSlot((BYTE*)hModule, pImportDesc, "OutputDebugStringA")
+                : nullptr;
+            if (ppDebug) {
+                DWORD oldProtect;
+                VirtualProtect(ppDebug, sizeof(PROC), PAGE_READWRITE, &oldProtect);
+                OriginalOutputDebugStringA = (void (WINAPI*)(LPCSTR)) * ppDebug;
+                *ppDebug = (PROC)HookedOutputDebugStringA;
+                VirtualProtect(ppDebug, sizeof(PROC), oldProtect, &oldProtect);
             }
         }
         if (_stricmp(dllName, "d3d9.dll") == 0) {
